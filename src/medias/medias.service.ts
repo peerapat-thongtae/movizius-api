@@ -33,7 +33,7 @@ export class MediasService {
     return `This action removes a #${id} media`;
   }
 
-  @Cron('7 20 * * *')
+  @Cron('40 20 * * *')
   async sendNotificationsToLine() {
     const respUser = await this.authService.findAll();
     const users = respUser.data;

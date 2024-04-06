@@ -8,7 +8,7 @@ import {
 import { MediasModule } from '../medias/medias.module';
 import { TMDBService } from '../medias/tmdb.service';
 import LineController from './line.controller';
-import { LineMiddleware } from './line.middleware';
+// import { LineMiddleware } from './line.middleware';
 import { LineService } from './line.service';
 
 @Module({
@@ -17,9 +17,4 @@ import { LineService } from './line.service';
   providers: [LineService, TMDBService],
   exports: [LineService],
 })
-export class LineModule implements NestModule {
-  // Middleware
-  configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(LineMiddleware).forRoutes('line');
-  }
-}
+export class LineModule {}

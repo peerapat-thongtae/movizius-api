@@ -76,7 +76,7 @@ export class MediasService {
     }
   }
 
-  @Cron('40 20 * * *')
+  @Cron('12 2 * * *')
   async sendNotificationsToLine() {
     const respUser = await this.authService.findAll();
     const users = respUser.data;

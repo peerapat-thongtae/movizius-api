@@ -45,6 +45,8 @@
     "date-fns-tz": "^2.0.1",
     "dayjs": "^1.11.10",
     "express-oauth2-jwt-bearer": "^1.6.0",
+    "fs": "0.0.1-security",
+    "gunzip-file": "^0.1.1",
     "helmet": "^7.1.0",
     "justwatch-api": "^1.0.7",
     "jwks-rsa": "^3.1.0",

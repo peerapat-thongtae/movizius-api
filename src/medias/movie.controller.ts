@@ -6,13 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { MediasService } from './medias.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
+import { AuthGuard } from '@nestjs/passport';
 
-@Controller('medias')
-export class MediasController {
+@Controller('movie')
+@UseGuards(AuthGuard('jwt'))
+export class MovieController {
+  private readonly mediaType = 'movie';
   constructor(private readonly mediasService: MediasService) {}
 
   @Post()
@@ -21,22 +26,22 @@ export class MediasController {
   }
 
   @Get()
-  findAll() {
-    return this.mediasService.findAll();
+  findAll(@Req() req) {
+    return this.mediasService.findAll(req.user.sub, this.mediaType);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.mediasService.findOne(+id);
+  findOne(@Param('id') id: string, @Req() req) {
+    return this.mediasService.findOne(id, req.user.sub, this.mediaType);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMediaDto: UpdateMediaDto) {
-    return this.mediasService.update(+id, updateMediaDto);
+    return this.mediasService.update(id, updateMediaDto, this.mediaType);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.mediasService.remove(+id);
+    return this.mediasService.remove(id, this.mediaType);
   }
 }

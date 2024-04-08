@@ -27,10 +27,7 @@ export class AuthController {
   @Get()
   @UseGuards(AuthGuard('jwt'))
   findAll(@Req() _req) {
-    return {
-      aa: 1,
-      req: _req.user,
-    };
+    return 1;
   }
 
   @Get(':id')

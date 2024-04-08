@@ -80,6 +80,12 @@ dependencies:
   express-oauth2-jwt-bearer:
     specifier: ^1.6.0
     version: 1.6.0
+  fs:
+    specifier: 0.0.1-security
+    version: 0.0.1-security
+  gunzip-file:
+    specifier: ^0.1.1
+    version: 0.1.1
   helmet:
     specifier: ^7.1.0
     version: 7.1.0
@@ -3375,6 +3381,10 @@ packages:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
 
+  /fs@0.0.1-security:
+    resolution: {integrity: sha512-3XY9e1pP0CVEUCdj5BmfIZxRBTSDycnbqhIOGec9QYtmVH2fbLpj86CFWkrNOkt/Fvty4KZG5lTglL9j/gJ87w==}
+    dev: false
+
   /fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -3506,6 +3516,10 @@ packages:
   /graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
     dev: true
+
+  /gunzip-file@0.1.1:
+    resolution: {integrity: sha512-DjDExBKHuhyhHOs8HeGV5dw6wY6eYTl4pAHz27oy8XppgBK60vmG/G3bY09zyT9PXX4TjmnEF4hYoRn61Fctlg==}
+    dev: false
 
   /has-flag@3.0.0:
     resolution: {integrity: sha512-sKJf1+ceQBr4SMkvQnBDNDtf4TXpVhVGateu0t918bl30FnbE2m4vNLX+VWe/dpjlb+HugGYzW7uQXH98HPEYw==}

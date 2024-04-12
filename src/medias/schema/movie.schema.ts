@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import paginate from 'mongoose-paginate-v2';
+import * as paginate from 'mongoose-paginate-v2';
 
 export type MovieDocument = Movie & Document;
 

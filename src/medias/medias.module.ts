@@ -9,10 +9,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Movie, MovieSchema } from './schema/movie.schema';
 import { TV, TVSchema } from './schema/tv.schema';
 import { TVController } from './tv.controller';
-import { Imdb, ImdbSchema } from './schema/imdb.schema';
+import { RatingController } from './rating.controller';
 
 @Module({
-  controllers: [MovieController, TVController],
+  controllers: [MovieController, TVController, RatingController],
   imports: [
     LineModule,
     forwardRef(() => AuthModule),
@@ -28,13 +28,6 @@ import { Imdb, ImdbSchema } from './schema/imdb.schema';
         name: TV.name,
         schema: TVSchema,
         collection: 'tv',
-      },
-    ]),
-    MongooseModule.forFeature([
-      {
-        name: Imdb.name,
-        schema: ImdbSchema,
-        collection: 'imdb',
       },
     ]),
   ],

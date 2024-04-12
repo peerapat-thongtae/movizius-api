@@ -45,3 +45,11 @@ export class Movie {
 export const MovieSchema = SchemaFactory.createForClass(Movie);
 MovieSchema.plugin(paginate);
 MovieSchema.index({}, { unique: true });
+MovieSchema.set('toJSON', {
+  transform: function (doc, ret) {
+    // ret.id = ret._id;
+    delete ret._id;
+    // delete ret.user_id;
+    delete ret.__v;
+  },
+});

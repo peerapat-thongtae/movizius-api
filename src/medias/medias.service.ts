@@ -15,14 +15,12 @@ import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
 import { tsvJSON } from 'src/shared/helpers';
-import { Imdb, ImdbDocument } from './schema/imdb.schema';
 
 @Injectable()
 export class MediasService {
   constructor(
     @InjectModel(Movie.name) private movieModel: Model<MovieDocument>,
     @InjectModel(TV.name) private tvModel: Model<TVDocument>,
-    @InjectModel(Imdb.name) private imdbModel: Model<ImdbDocument>,
     private tmdbService: TMDBService,
     @Inject(forwardRef(() => LineService))
     private lineService: LineService,
@@ -30,8 +28,23 @@ export class MediasService {
     private authService: AuthService,
   ) {}
 
-  create(createMediaDto: CreateMediaDto) {
-    return 'This action adds a new media';
+  async create(createMediaDto: any, mediaType: string) {
+    const id = createMediaDto?.id || '';
+    if (mediaType === 'movie') {
+      const findMedia = await this.movieModel.find({ id });
+      if (!findMedia) {
+        await this.movieModel.create(createMediaDto);
+      } else {
+        await this.movieModel.updateOne({ id }, createMediaDto);
+      }
+    } else {
+      const findMedia = await this.tvModel.find({ id });
+      if (!findMedia) {
+        await this.tvModel.create(createMediaDto);
+      } else {
+        await this.tvModel.updateOne({ id }, createMediaDto);
+      }
+    }
   }
 
   async findAll(userId: string, mediaType: string) {
@@ -106,11 +119,10 @@ export class MediasService {
       return;
     }
 
-    console.log(findRating);
     return findRating;
   }
 
-  @Cron('55 1 * * *')
+  @Cron('20 2 * * *')
   async updateIMDBDetail() {
     console.log('start imdb');
     const res = await axios.get(

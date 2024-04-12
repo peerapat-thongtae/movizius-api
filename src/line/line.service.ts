@@ -14,11 +14,6 @@ import LineClient from './line.config';
 
 @Injectable()
 export class LineService {
-  private replyToken = '';
-  private client = new LineClient({
-    channelAccessToken: this.configService.get('LINE_CHANNEL_ACCESS_TOKEN'),
-    channelSecret: this.configService.get('LINE_CHANNEL_SECRET'),
-  });
   constructor(
     private readonly configService: ConfigService,
     // private readonly tmdbService: TMDBService,
@@ -26,6 +21,11 @@ export class LineService {
     // private readonly todoService: TodosService,
     // @InjectQueue('lineNotiQueue') private lineNotiQueue: Queue,
   ) {}
+  private replyToken = '';
+  private client = new LineClient({
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.LINE_CHANNEL_SECRET,
+  });
   sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }

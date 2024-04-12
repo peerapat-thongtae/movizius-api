@@ -14,7 +14,7 @@ import { pickBy, range, startsWith, toArray } from 'lodash';
 import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
-import { tsvJSON } from 'src/shared/helpers';
+import { tsvJSON } from '../shared/helpers';
 
 @Injectable()
 export class MediasService {

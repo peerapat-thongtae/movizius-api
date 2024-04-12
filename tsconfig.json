@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "commonjs",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -12,12 +12,31 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
-    "lib": ["esnext"],
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "lib": ["ESNext"]
+    // "paths": {
+    //   "@application/*": [
+    //     "application/*"
+    //   ],
+    //   "@assets/*": [
+    //     "assets/*"
+    //   ],
+    //   "@views/*": [
+    //     "views/*"
+    //   ],
+    //   "@domain/*": [
+    //     "domain/*"
+    //   ],
+    //   "@infrastructure/*": [
+    //     "infrastructure/*"
+    //   ],
+    //   "@presentation/*": [
+    //     "presentation/*"
+    //   ],
+    //   "@utilities/*": [
+    //     "utilities/*"
+    //   ]
+    // }
   }
 }

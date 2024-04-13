@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TMDBService } from './tmdb.service';
 import axios from 'axios';
-import { pickBy, range, startsWith, toArray, chunk } from 'lodash';
+import { pickBy, range, startsWith, toArray, chunk, orderBy } from 'lodash';
 import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
@@ -123,10 +123,10 @@ export class MediasService {
 
     for (const a of imdbs) {
       const arr = JSON.parse(a.ratings);
-      const findRating = arr.find((val: any) => val.id === imdbId);
-      if (findRating) {
-        return findRating;
-      }
+      // const findRating = arr.find((val: any) => val.id === imdbId);
+      // if (findRating) {
+      //   return findRating;
+      // }
       newArr.push(...arr);
     }
     // const imdbData: any[] = JSON.parse(fileData);
@@ -167,9 +167,10 @@ export class MediasService {
             votes: Number(imdbData.numVotes) || 0,
           };
         })
-        .filter((val) => val.id);
+        .filter((val) => val.id && val.votes > 100 && val.rating > 2);
 
-      const newa = chunk(datas, 200000);
+      const sortDatas = orderBy(datas, 'votes', 'desc');
+      const newa = chunk(sortDatas, 1500);
 
       await this.imdbModel.create(
         newa.map((val) => {

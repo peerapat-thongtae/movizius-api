@@ -8,14 +8,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TMDBService } from './tmdb.service';
 import axios from 'axios';
-import { pickBy, range, startsWith, toArray } from 'lodash';
+import { pickBy, range, startsWith, toArray, chunk } from 'lodash';
 import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
 import { tsvJSON } from '../shared/helpers';
 import { Media, MediaDocument } from './schema/medias.schema';
 import { Imdb, ImdbDocument } from './schema/imdb.schema';
-import * as _ from 'lodash';
 // import zlib from 'zlib';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const zlib = require('zlib');
@@ -173,7 +172,7 @@ export class MediasService {
         })
         .filter((val) => val.id);
 
-      const newa = _.chunk(datas, 200000);
+      const newa = chunk(datas, 200000);
 
       await this.imdbModel.create(
         newa.map((val) => {

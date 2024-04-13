@@ -108,36 +108,34 @@ export class MediasService {
   }
 
   async getImdbRating(imdbId: string) {
-    const fileData = fs.readFileSync('imdb.json', { encoding: 'utf-8' });
-    const imdb = JSON.parse(fileData);
+    // const fileData = fs.readFileSync('imdb.json', { encoding: 'utf-8' });
+    // const imdb = JSON.parse(fileData);
 
-    const findRating = imdb.find((val: any) => val.id === imdbId);
-    if (!findRating) {
-      return;
-    }
-
-    return findRating;
-    // return this.updateIMDBDetail();
-    // const imdbs = [];
-    // await this.imdbModel.findOne();
-    // return 1;
-    // const newArr = [];
-
-    // for (const a of imdbs) {
-    //   const arr = JSON.parse(a.ratings);
-    //   const findRating = arr.find((val: any) => val.id === imdbId);
-    //   if (findRating) {
-    //     return findRating;
-    //   }
-    //   newArr.push(...arr);
-    // }
-    // // const imdbData: any[] = JSON.parse(fileData);
-    // const findRating = newArr.find((val: any) => val.id === imdbId);
+    // const findRating = imdb.find((val: any) => val.id === imdbId);
     // if (!findRating) {
     //   return;
     // }
 
     // return findRating;
+    // return this.updateIMDBDetail();
+    const imdbs = await this.imdbModel.find();
+    const newArr = [];
+
+    for (const a of imdbs) {
+      const arr = JSON.parse(a.ratings);
+      const findRating = arr.find((val: any) => val.id === imdbId);
+      if (findRating) {
+        return findRating;
+      }
+      newArr.push(...arr);
+    }
+    // const imdbData: any[] = JSON.parse(fileData);
+    const findRating = newArr.find((val: any) => val.id === imdbId);
+    if (!findRating) {
+      return;
+    }
+
+    return findRating;
   }
 
   @Cron('13 19 * * *')

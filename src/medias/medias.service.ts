@@ -102,7 +102,6 @@ export class MediasService {
     return;
   }
 
-  @Cron('56 17 * * *')
   async test() {
     console.log('start');
     console.log(await this.getImdbRating('tt0137523'));
@@ -141,7 +140,7 @@ export class MediasService {
     // return findRating;
   }
 
-  @Cron('51 17 * * *')
+  @Cron('13 19 * * *')
   async updateIMDBDetail() {
     console.log('start imdb');
     const res = await axios.get(

@@ -3,12 +3,15 @@ import { Document, Types } from 'mongoose';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const paginate = require('mongoose-paginate-v2');
 
-export type TVDocument = TV & Document;
+export type MediaDocument = Media & Document;
 
 @Schema()
-export class TV {
+export class Media {
   @Prop({ type: String, index: true, required: true })
   id: string;
+
+  @Prop({ type: String, index: true, required: true })
+  media_type: string;
 
   @Prop({ type: String })
   name: string;
@@ -56,10 +59,10 @@ export class TV {
   updated_at: Date;
 }
 
-export const TVSchema = SchemaFactory.createForClass(TV);
-TVSchema.plugin(paginate);
-TVSchema.index({}, { unique: true });
-TVSchema.set('toJSON', {
+export const MediaSchema = SchemaFactory.createForClass(Media);
+MediaSchema.plugin(paginate);
+MediaSchema.index({}, { unique: true });
+MediaSchema.set('toJSON', {
   transform: function (doc, ret) {
     // ret.id = ret._id;
     delete ret._id;

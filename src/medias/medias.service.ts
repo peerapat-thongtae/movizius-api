@@ -1,13 +1,11 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { LineService } from 'src/line/line.service';
 import { AuthService } from 'src/auth/auth.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { Movie, MovieDocument } from './schema/movie.schema';
 import { Model } from 'mongoose';
-import { TV, TVDocument } from './schema/tv.schema';
 import { TMDBService } from './tmdb.service';
 import axios from 'axios';
 import { pickBy, range, startsWith, toArray } from 'lodash';
@@ -15,12 +13,20 @@ import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
 import { tsvJSON } from '../shared/helpers';
+import { Media, MediaDocument } from './schema/medias.schema';
+import { Imdb, ImdbDocument } from './schema/imdb.schema';
+import * as _ from 'lodash';
+// import zlib from 'zlib';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const zlib = require('zlib');
 
 @Injectable()
 export class MediasService {
   constructor(
-    @InjectModel(Movie.name) private movieModel: Model<MovieDocument>,
-    @InjectModel(TV.name) private tvModel: Model<TVDocument>,
+    @InjectModel(Media.name) private mediaModel: Model<MediaDocument>,
+    @InjectModel(Imdb.name) private imdbModel: Model<ImdbDocument>,
+    // @InjectModel(Movie.name) private movieModel: Model<MovieDocument>,
+    // @InjectModel(TV.name) private tvModel: Model<TVDocument>,
     private tmdbService: TMDBService,
     @Inject(forwardRef(() => LineService))
     private lineService: LineService,
@@ -30,31 +36,23 @@ export class MediasService {
 
   async create(createMediaDto: any, mediaType: string) {
     const id = createMediaDto?.id || '';
-    if (mediaType === 'movie') {
-      const findMedia = await this.movieModel.find({ id });
-      if (!findMedia) {
-        await this.movieModel.create(createMediaDto);
-      } else {
-        await this.movieModel.updateOne({ id }, createMediaDto);
-      }
+    const findMedia = await this.mediaModel.find({ id, media_type: mediaType });
+    if (!findMedia) {
+      await this.mediaModel.create(createMediaDto);
     } else {
-      const findMedia = await this.tvModel.find({ id });
-      if (!findMedia) {
-        await this.tvModel.create(createMediaDto);
-      } else {
-        await this.tvModel.updateOne({ id }, createMediaDto);
-      }
+      await this.mediaModel.updateOne(
+        { id, media_type: mediaType },
+        createMediaDto,
+      );
     }
   }
 
   async findAll(userId: string, mediaType: string) {
     // const a = await this.tmdbService.accountMovieWatchlist();
-    let resp: Movie[] | TV[] = [];
-    if (mediaType === 'movie') {
-      resp = await this.movieModel.find({ user_id: userId });
-    } else {
-      resp = await this.tvModel.find({ user_id: userId });
-    }
+    const resp: Media[] = await this.mediaModel.find({
+      user_id: userId,
+      media_type: mediaType,
+    });
 
     return {
       results: resp,
@@ -64,29 +62,23 @@ export class MediasService {
   }
 
   findOne(id: string, userId: string, mediaType: string) {
-    if (mediaType === 'movie') {
-      return this.movieModel.findOne({ id: id, user_id: userId });
-    } else {
-      return this.tvModel.findOne({ id: id, user_id: userId });
-    }
+    return this.mediaModel.findOne({
+      id: id,
+      user_id: userId,
+      media_type: mediaType,
+    });
   }
 
   async update(id: string, updateMediaDto: UpdateMediaDto, mediaType: string) {
-    if (mediaType === 'movie') {
-      await this.movieModel.updateOne({ id }, updateMediaDto);
-    } else {
-      await this.tvModel.updateOne({ id }, updateMediaDto);
-    }
+    await this.mediaModel.updateOne(
+      { id, media_type: mediaType },
+      updateMediaDto,
+    );
   }
 
   async remove(id: string, mediaType: string) {
-    if (mediaType === 'movie') {
-      await this.movieModel.deleteOne({ id: id });
-      return;
-    } else {
-      await this.tvModel.deleteOne({ id: id });
-      return;
-    }
+    await this.mediaModel.deleteOne({ id: id, media_type: mediaType });
+    return;
   }
 
   @Cron('12 2 * * *')
@@ -111,18 +103,46 @@ export class MediasService {
     return;
   }
 
+  @Cron('56 17 * * *')
+  async test() {
+    console.log('start');
+    console.log(await this.getImdbRating('tt0137523'));
+  }
+
   async getImdbRating(imdbId: string) {
     const fileData = fs.readFileSync('imdb.json', { encoding: 'utf-8' });
-    const imdbData: any[] = JSON.parse(fileData);
-    const findRating = imdbData.find((val: any) => val.id === imdbId);
+    const imdb = JSON.parse(fileData);
+
+    const findRating = imdb.find((val: any) => val.id === imdbId);
     if (!findRating) {
       return;
     }
 
     return findRating;
+    // return this.updateIMDBDetail();
+    // const imdbs = [];
+    // await this.imdbModel.findOne();
+    // return 1;
+    // const newArr = [];
+
+    // for (const a of imdbs) {
+    //   const arr = JSON.parse(a.ratings);
+    //   const findRating = arr.find((val: any) => val.id === imdbId);
+    //   if (findRating) {
+    //     return findRating;
+    //   }
+    //   newArr.push(...arr);
+    // }
+    // // const imdbData: any[] = JSON.parse(fileData);
+    // const findRating = newArr.find((val: any) => val.id === imdbId);
+    // if (!findRating) {
+    //   return;
+    // }
+
+    // return findRating;
   }
 
-  @Cron('20 2 * * *')
+  @Cron('51 17 * * *')
   async updateIMDBDetail() {
     console.log('start imdb');
     const res = await axios.get(
@@ -134,29 +154,38 @@ export class MediasService {
         },
       },
     );
-    const gzFileName = 'imdb-rating.tsv.gz';
-    const tsvFileName = 'imdb-rating.tsv';
-    // FileDownload(res, gzFileName);
-    fs.writeFileSync(gzFileName, res.data, { encoding: 'binary' });
-    gz(gzFileName, tsvFileName, async () => {
-      const tsv = fs.readFileSync(tsvFileName, 'utf-8');
-      const resJSON = tsvJSON(tsv.toString());
 
-      const datas = resJSON.map((imdbData) => {
-        return {
-          id: imdbData.tconst,
-          rating: Number(imdbData.averageRating),
-          votes: Number(imdbData.numVotes),
-        };
-      });
+    await this.imdbModel.deleteMany();
 
-      fs.writeFileSync('imdb.json', JSON.stringify(datas));
+    // Calling gunzip method
+    zlib.gunzip(res.data, async (err, buffer) => {
+      // console.log(buffer.toString('utf8'));
+      // fs.writeFileSync(tsvFileName, buffer);
+      const resJSON = tsvJSON(buffer.toString());
 
-      // Remove file
-      fs.unlinkSync(gzFileName);
-      fs.unlinkSync(tsvFileName);
+      const datas = resJSON
+        .map((imdbData) => {
+          return {
+            id: imdbData.tconst,
+            rating: Number(imdbData.averageRating) || 0,
+            votes: Number(imdbData.numVotes) || 0,
+          };
+        })
+        .filter((val) => val.id);
 
+      const newa = _.chunk(datas, 200000);
+
+      await this.imdbModel.create(
+        newa.map((val) => {
+          return {
+            ratings: JSON.stringify(val),
+          };
+        }),
+      );
       console.log('end');
+      // await this.imdbModel.insertMany(datas);
     });
+
+    return;
   }
 }

@@ -6,10 +6,10 @@ import { LineModule } from '../line/line.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Movie, MovieSchema } from './schema/movie.schema';
-import { TV, TVSchema } from './schema/tv.schema';
 import { TVController } from './tv.controller';
 import { RatingController } from './rating.controller';
+import { Media, MediaSchema } from './schema/medias.schema';
+import { Imdb, ImdbSchema } from './schema/imdb.schema';
 
 @Module({
   controllers: [MovieController, TVController, RatingController],
@@ -18,16 +18,16 @@ import { RatingController } from './rating.controller';
     forwardRef(() => AuthModule),
     MongooseModule.forFeature([
       {
-        name: Movie.name,
-        schema: MovieSchema,
-        collection: 'movie',
+        name: Media.name,
+        schema: MediaSchema,
+        collection: 'media',
       },
     ]),
     MongooseModule.forFeature([
       {
-        name: TV.name,
-        schema: TVSchema,
-        collection: 'tv',
+        name: Imdb.name,
+        schema: ImdbSchema,
+        collection: 'imdb',
       },
     ]),
   ],

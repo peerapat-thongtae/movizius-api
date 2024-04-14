@@ -22,7 +22,7 @@ export class MovieController {
 
   @Post()
   create(@Body() createMediaDto: CreateMediaDto) {
-    return this.mediasService.create(createMediaDto, 'movie');
+    return this.mediasService.create(createMediaDto, this.mediaType);
   }
 
   @Get()

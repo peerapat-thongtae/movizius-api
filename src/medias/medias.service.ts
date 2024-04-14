@@ -37,7 +37,10 @@ export class MediasService {
     const id = createMediaDto?.id || '';
     const findMedia = await this.mediaModel.find({ id, media_type: mediaType });
     if (!findMedia) {
-      await this.mediaModel.create(createMediaDto);
+      await this.mediaModel.create({
+        ...createMediaDto,
+        media_type: mediaType,
+      });
     } else {
       await this.mediaModel.updateOne(
         { id, media_type: mediaType },
@@ -80,7 +83,7 @@ export class MediasService {
     return;
   }
 
-  @Cron('12 2 * * *')
+  @Cron('36 13 * * *')
   async sendNotificationsToLine() {
     const respUser = await this.authService.findAll();
     const users = respUser.data;
@@ -170,7 +173,7 @@ export class MediasService {
         .filter((val) => val.id && val.votes > 100 && val.rating > 2);
 
       const sortDatas = orderBy(datas, 'votes', 'desc');
-      const newa = chunk(sortDatas, 1500);
+      const newa = chunk(sortDatas, 10000);
 
       await this.imdbModel.create(
         newa.map((val) => {

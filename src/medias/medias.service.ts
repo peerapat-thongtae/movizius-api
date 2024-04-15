@@ -7,6 +7,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TMDBService } from './tmdb.service';
+import { getDownloadUrl, list } from '@vercel/blob';
 import axios from 'axios';
 import {
   pickBy,
@@ -23,6 +24,7 @@ const gz = require('gunzip-file');
 import { tsvJSON } from '../shared/helpers';
 import { Media, MediaDocument } from './schema/medias.schema';
 import { Imdb, ImdbDocument } from './schema/imdb.schema';
+import { HttpService } from '@nestjs/axios';
 // import zlib from 'zlib';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const zlib = require('zlib');
@@ -34,6 +36,7 @@ export class MediasService {
     @InjectModel(Imdb.name) private imdbModel: Model<ImdbDocument>,
     // @InjectModel(Movie.name) private movieModel: Model<MovieDocument>,
     // @InjectModel(TV.name) private tvModel: Model<TVDocument>,
+    private readonly httpService: HttpService,
     private tmdbService: TMDBService,
     @Inject(forwardRef(() => LineService))
     private lineService: LineService,
@@ -119,12 +122,23 @@ export class MediasService {
   }
 
   async getAllImdbRatings() {
-    const fileData = fs.readFileSync('imdb.json', 'utf-8');
-    const imdbs = JSON.parse(fileData);
-    return take(imdbs, 50000);
+    const listFiles = await list();
+
+    const data = await this.httpService.axiosRef.get(
+      listFiles.blobs?.[0].downloadUrl,
+      {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    return take(data.data, 4);
   }
 
   async getImdbRating(imdbId: string) {
+    // const { url } = await get('articles/blob.txt', 'Hello World!', { access: 'public' });
     const fileData = fs.readFileSync('imdb.json', 'utf-8');
     const imdbs = JSON.parse(fileData);
     // const imdbData: any[] = JSON.parse(fileData);
@@ -133,10 +147,10 @@ export class MediasService {
       return;
     }
 
-    return findRating;
+    // return findRating;
   }
 
-  @Cron('18 10 * * *')
+  // @Cron('18 10 * * *')
   async updateIMDBDetail() {
     try {
       console.log('start imdb');
@@ -154,7 +168,7 @@ export class MediasService {
 
       let datasRes: any;
       // Calling gunzip method
-      zlib.gunzip(res.data, async (err, buffer) => {
+      await zlib.gunzip(res.data, async (err, buffer) => {
         // console.log(buffer.toString('utf8'));
         // fs.writeFileSync(tsvFileName, buffer);
         const resJSON = tsvJSON(buffer.toString());

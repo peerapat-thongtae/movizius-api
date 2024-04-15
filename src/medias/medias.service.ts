@@ -8,7 +8,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TMDBService } from './tmdb.service';
 import axios from 'axios';
-import { pickBy, range, startsWith, toArray, chunk, orderBy } from 'lodash';
+import {
+  pickBy,
+  range,
+  startsWith,
+  toArray,
+  chunk,
+  orderBy,
+  take,
+} from 'lodash';
 import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
@@ -110,30 +118,17 @@ export class MediasService {
     console.log(await this.getImdbRating('tt0137523'));
   }
 
+  async getAllImdbRatings() {
+    const fileData = fs.readFileSync('imdb.json', 'utf-8');
+    const imdbs = JSON.parse(fileData);
+    return take(imdbs, 50000);
+  }
+
   async getImdbRating(imdbId: string) {
-    // const fileData = fs.readFileSync('imdb.json', { encoding: 'utf-8' });
-    // const imdb = JSON.parse(fileData);
-
-    // const findRating = imdb.find((val: any) => val.id === imdbId);
-    // if (!findRating) {
-    //   return;
-    // }
-
-    // return findRating;
-    // return this.updateIMDBDetail();
-    const imdbs = await this.imdbModel.find();
-    const newArr = [];
-
-    for (const a of imdbs) {
-      const arr = JSON.parse(a.ratings);
-      // const findRating = arr.find((val: any) => val.id === imdbId);
-      // if (findRating) {
-      //   return findRating;
-      // }
-      newArr.push(...arr);
-    }
+    const fileData = fs.readFileSync('imdb.json', 'utf-8');
+    const imdbs = JSON.parse(fileData);
     // const imdbData: any[] = JSON.parse(fileData);
-    const findRating = newArr.find((val: any) => val.id === imdbId);
+    const findRating = imdbs.find((val: any) => val.id === imdbId);
     if (!findRating) {
       return;
     }
@@ -141,7 +136,7 @@ export class MediasService {
     return findRating;
   }
 
-  @Cron('13 19 * * *')
+  @Cron('18 10 * * *')
   async updateIMDBDetail() {
     console.log('start imdb');
     const res = await axios.get(
@@ -161,6 +156,7 @@ export class MediasService {
       // console.log(buffer.toString('utf8'));
       // fs.writeFileSync(tsvFileName, buffer);
       const resJSON = tsvJSON(buffer.toString());
+      fs.writeFileSync('imdb.json', JSON.stringify(resJSON));
 
       const datas = resJSON
         .map((imdbData) => {

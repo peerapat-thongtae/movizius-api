@@ -18,6 +18,12 @@ import { AuthGuard } from '@nestjs/passport';
 export class RatingController {
   constructor(private readonly mediasService: MediasService) {}
 
+  @Get('/imdb')
+  getAll() {
+    console.log('yes');
+    return this.mediasService.getAllImdbRatings();
+  }
+
   @Get('/imdb/:id')
   getImdbRating(@Param('id') id: string) {
     return this.mediasService.getImdbRating(id);

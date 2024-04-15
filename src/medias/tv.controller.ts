@@ -26,12 +26,12 @@ export class TVController {
 
   @Get()
   findAll(@Req() req) {
-    return this.mediasService.findAll(req.user.sub, this.mediaType);
+    return this.mediasService.findAll(req?.user?.sub, this.mediaType);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string, @Req() req) {
-    return this.mediasService.findOne(id, req.user.sub, this.mediaType);
+    return this.mediasService.findOne(id, req?.user?.sub, this.mediaType);
   }
 
   @Patch(':id')

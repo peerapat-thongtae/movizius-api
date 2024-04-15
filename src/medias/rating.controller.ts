@@ -29,7 +29,7 @@ export class RatingController {
     return this.mediasService.getImdbRating(id);
   }
 
-  @Get('/imdb/update')
+  @Get('/update')
   updateIMDBDetail() {
     return this.mediasService.updateIMDBDetail();
   }

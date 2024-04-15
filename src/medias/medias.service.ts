@@ -138,50 +138,54 @@ export class MediasService {
 
   @Cron('18 10 * * *')
   async updateIMDBDetail() {
-    console.log('start imdb');
-    const res = await axios.get(
-      'https://datasets.imdbws.com/title.ratings.tsv.gz',
-      {
-        responseType: 'arraybuffer', // Important
-        headers: {
-          'Content-Type': 'application/gzip',
+    try {
+      console.log('start imdb');
+      const res = await axios.get(
+        'https://datasets.imdbws.com/title.ratings.tsv.gz',
+        {
+          responseType: 'arraybuffer', // Important
+          headers: {
+            'Content-Type': 'application/gzip',
+          },
         },
-      },
-    );
-
-    await this.imdbModel.deleteMany();
-
-    // Calling gunzip method
-    zlib.gunzip(res.data, async (err, buffer) => {
-      // console.log(buffer.toString('utf8'));
-      // fs.writeFileSync(tsvFileName, buffer);
-      const resJSON = tsvJSON(buffer.toString());
-      fs.writeFileSync('imdb.json', JSON.stringify(resJSON));
-
-      const datas = resJSON
-        .map((imdbData) => {
-          return {
-            id: imdbData.tconst,
-            rating: Number(imdbData.averageRating) || 0,
-            votes: Number(imdbData.numVotes) || 0,
-          };
-        })
-        .filter((val) => val.id && val.votes > 100 && val.rating > 2);
-
-      const sortDatas = orderBy(datas, 'votes', 'desc');
-      const newa = chunk(sortDatas, 10000);
-
-      await this.imdbModel.create(
-        newa.map((val) => {
-          return {
-            ratings: JSON.stringify(val),
-          };
-        }),
       );
-      console.log('end');
-      // await this.imdbModel.insertMany(datas);
-    });
 
-    return;
+      await this.imdbModel.deleteMany();
+
+      // Calling gunzip method
+      zlib.gunzip(res.data, async (err, buffer) => {
+        // console.log(buffer.toString('utf8'));
+        // fs.writeFileSync(tsvFileName, buffer);
+        const resJSON = tsvJSON(buffer.toString());
+        fs.writeFileSync('imdb.json', JSON.stringify(resJSON));
+
+        const datas = resJSON
+          .map((imdbData) => {
+            return {
+              id: imdbData.tconst,
+              rating: Number(imdbData.averageRating) || 0,
+              votes: Number(imdbData.numVotes) || 0,
+            };
+          })
+          .filter((val) => val.id && val.votes > 100 && val.rating > 2);
+
+        const sortDatas = orderBy(datas, 'votes', 'desc');
+        const newa = chunk(sortDatas, 10000);
+
+        await this.imdbModel.create(
+          newa.map((val) => {
+            return {
+              ratings: JSON.stringify(val),
+            };
+          }),
+        );
+        console.log('end');
+        // await this.imdbModel.insertMany(datas);
+      });
+
+      return;
+    } catch (err) {
+      return err;
+    }
   }
 }

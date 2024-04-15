@@ -152,6 +152,7 @@ export class MediasService {
 
       await this.imdbModel.deleteMany();
 
+      let datasRes: any;
       // Calling gunzip method
       zlib.gunzip(res.data, async (err, buffer) => {
         // console.log(buffer.toString('utf8'));
@@ -172,6 +173,8 @@ export class MediasService {
         const sortDatas = orderBy(datas, 'votes', 'desc');
         const newa = chunk(sortDatas, 10000);
 
+        datasRes = resJSON;
+
         await this.imdbModel.create(
           newa.map((val) => {
             return {
@@ -183,7 +186,7 @@ export class MediasService {
         // await this.imdbModel.insertMany(datas);
       });
 
-      return;
+      return datasRes;
     } catch (err) {
       return err;
     }

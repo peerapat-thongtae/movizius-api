@@ -28,4 +28,9 @@ export class RatingController {
   getImdbRating(@Param('id') id: string) {
     return this.mediasService.getImdbRating(id);
   }
+
+  @Get('/imdb/update')
+  updateIMDBDetail() {
+    return this.mediasService.updateIMDBDetail();
+  }
 }

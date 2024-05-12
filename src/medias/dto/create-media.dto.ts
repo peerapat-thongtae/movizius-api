@@ -1,1 +1,3 @@
-export class CreateMediaDto {}
+export class CreateMediaDto {
+  status: string;
+}

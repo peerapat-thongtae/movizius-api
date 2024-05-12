@@ -1,5 +1,4 @@
 import {
-  Controller,
   Get,
   Post,
   Body,
@@ -8,17 +7,21 @@ import {
   Delete,
   Req,
   UseGuards,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { MediasService } from './medias.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('tv')
 @UseGuards(AuthGuard('jwt'))
-export class TVController {
-  private readonly mediaType = 'tv';
-  constructor(private readonly mediasService: MediasService) {}
+export class MediaController {
+  constructor(
+    private readonly mediaType: string,
+    @Inject(forwardRef(() => MediasService))
+    private readonly mediasService?: MediasService,
+  ) {}
 
   @Post()
   create(@Body() createMediaDto: CreateMediaDto, @Req() req) {
@@ -34,14 +37,9 @@ export class TVController {
     return this.mediasService.findAll(req?.user?.sub, this.mediaType);
   }
 
-  @Get('paginate/:status')
-  paginate(@Param('status') status: string, @Req() req) {
-    return this.mediasService.paginateByStatus(
-      req?.user?.sub,
-      this.mediaType,
-      status,
-      Number(req.query?.page),
-    );
+  @Get('/random')
+  random(@Req() req) {
+    return this.mediasService.random(req?.user?.sub, this.mediaType);
   }
 
   @Get(':id')

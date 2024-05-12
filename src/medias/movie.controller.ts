@@ -21,13 +21,32 @@ export class MovieController {
   constructor(private readonly mediasService: MediasService) {}
 
   @Post()
-  create(@Body() createMediaDto: CreateMediaDto) {
-    return this.mediasService.create(createMediaDto, this.mediaType);
+  create(@Body() createMediaDto: CreateMediaDto, @Req() req) {
+    return this.mediasService.create(
+      createMediaDto,
+      this.mediaType,
+      req.user?.sub,
+    );
   }
 
   @Get()
   findAll(@Req() req) {
     return this.mediasService.findAll(req?.user?.sub, this.mediaType);
+  }
+
+  @Get('paginate/:status')
+  paginate(@Param('status') status: string, @Req() req) {
+    return this.mediasService.paginateByStatus(
+      req?.user?.sub,
+      this.mediaType,
+      status,
+      Number(req.query?.page),
+    );
+  }
+
+  @Get('/random')
+  random(@Req() req) {
+    return this.mediasService.random(req?.user?.sub, this.mediaType);
   }
 
   @Get(':id')

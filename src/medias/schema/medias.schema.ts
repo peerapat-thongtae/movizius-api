@@ -22,6 +22,12 @@ export class Media {
   // @Prop({ type: Number, index: true, required: true })
   // episode_number: string;
 
+  @Prop({ type: Number, default: null })
+  number_of_seasons: number | null;
+
+  @Prop({ type: Number, default: null })
+  number_of_episodes: number | null;
+
   @Prop({ type: String, index: true, required: true })
   user_id: string;
 

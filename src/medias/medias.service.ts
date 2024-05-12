@@ -44,19 +44,95 @@ export class MediasService {
     private authService: AuthService,
   ) {}
 
-  async create(createMediaDto: any, mediaType: string) {
+  async create(createMediaDto: any, mediaType: string, userId: string) {
     const id = createMediaDto?.id || '';
-    const findMedia = await this.mediaModel.find({ id, media_type: mediaType });
-    if (!findMedia) {
-      await this.mediaModel.create({
-        ...createMediaDto,
-        media_type: mediaType,
-      });
+    const findMedia = await this.mediaModel.findOne({
+      id,
+      media_type: mediaType,
+    });
+
+    if (mediaType === 'movie') {
+      const objStatus = {
+        watchlist: false,
+        watched: false,
+      };
+
+      if (createMediaDto.status === 'watchlist') {
+        objStatus.watchlist = true;
+        objStatus.watched = false;
+      } else if (createMediaDto.status === 'watched') {
+        objStatus.watchlist = false;
+        objStatus.watched = true;
+      }
+
+      if (!findMedia) {
+        await this.mediaModel.create({
+          id,
+          media_type: mediaType,
+          user_id: userId,
+          ...objStatus,
+        });
+      } else {
+        await this.mediaModel.updateOne(
+          { id, media_type: mediaType },
+          {
+            ...objStatus,
+          },
+        );
+      }
     } else {
-      await this.mediaModel.updateOne(
-        { id, media_type: mediaType },
-        createMediaDto,
-      );
+      if (createMediaDto.status === 'watched') {
+        const detail = await this.tmdbService.tvInfo(createMediaDto.id);
+        console.log(detail);
+
+        const ep_watched = [];
+        const filterSeasons = detail.seasons.filter(
+          (val) => val.season_number !== 0,
+        );
+        for (const season of filterSeasons) {
+          for (let i = 1; i <= season.episode_count; i++) {
+            const findWatched = findMedia
+              ? findMedia.episode_watched.find(
+                  (val) =>
+                    val.season_number === season.season_number &&
+                    val.episode_number === i,
+                )
+              : null;
+            if (!findWatched) {
+              ep_watched.push({
+                season_number: season.season_number,
+                episode_number: i,
+                watched_at: new Date(),
+              });
+            }
+          }
+        }
+
+        if (findMedia) {
+          await this.update(
+            createMediaDto.id,
+            { episode_watched: ep_watched },
+            'tv',
+          );
+        } else {
+          await this.mediaModel.create({
+            id,
+            media_type: mediaType,
+            user_id: userId,
+            episode_watched: ep_watched,
+          });
+        }
+      } else {
+        if (!findMedia) {
+          await this.mediaModel.create({
+            id,
+            media_type: mediaType,
+            user_id: userId,
+            episode_watched: [],
+            watchlisted_at: new Date(),
+          });
+        }
+      }
     }
   }
 
@@ -74,6 +150,61 @@ export class MediasService {
     };
   }
 
+  async paginateByStatus(
+    userId: string,
+    mediaType: string,
+    status: string,
+    page: number,
+  ) {
+    // const a = await this.tmdbService.accountMovieWatchlist();
+    const skip = 20 * page;
+    const limit = 20;
+    const total = await this.mediaModel.find({
+      user_id: userId,
+      media_type: mediaType,
+      watchlist: status === 'watchlist',
+      watched: status === 'watched',
+    });
+    const resp: Media[] = await this.mediaModel.find(
+      {
+        user_id: userId,
+        media_type: mediaType,
+        watchlist: status === 'watchlist',
+        watched: status === 'watched',
+      },
+      {},
+      { skip: skip, limit: limit },
+    );
+
+    return {
+      results: resp,
+      total_results: total.length,
+      total_pages: total.length / 20,
+    };
+  }
+
+  async random(userId: string, mediaType: string) {
+    // const a = await this.tmdbService.accountMovieWatchlist();
+    console.log('fu', mediaType);
+    const resp: Media[] = await this.mediaModel.aggregate([
+      {
+        $match: {
+          $and: [
+            { user_id: userId },
+            { media_type: mediaType },
+            { watchlist: true },
+          ],
+        },
+      },
+      { $sample: { size: 10 } },
+    ]);
+    return {
+      results: resp,
+      total_results: resp.length,
+      total_pages: 1,
+    };
+  }
+
   findOne(id: string, userId: string, mediaType: string) {
     return this.mediaModel.findOne({
       id: id,
@@ -82,7 +213,7 @@ export class MediasService {
     });
   }
 
-  async update(id: string, updateMediaDto: UpdateMediaDto, mediaType: string) {
+  async update(id: string, updateMediaDto: any, mediaType: string) {
     await this.mediaModel.updateOne(
       { id, media_type: mediaType },
       updateMediaDto,
@@ -115,10 +246,28 @@ export class MediasService {
 
     return;
   }
-
+  @Cron('45 17 * * *')
   async test() {
     console.log('start');
-    console.log(await this.getImdbRating('tt0137523'));
+    const resp: Media[] = await this.mediaModel.find({
+      // user_id: userId,
+      media_type: 'tv',
+    });
+
+    for (const media of resp) {
+      const detail = await this.tmdbService.tvInfo(media.id);
+      console.log(detail.id);
+      await this.update(
+        media.id,
+        {
+          number_of_seasons: detail.number_of_seasons,
+          number_of_episodes: detail.number_of_episodes,
+        },
+        'tv',
+      );
+      // return;
+    }
+    console.log(resp.length);
   }
 
   async getAllImdbRatings() {

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -23,6 +23,7 @@ const zlib = require('zlib');
 
 @Injectable()
 export class MediasService {
+  private readonly logger = new Logger(MediasService.name);
   constructor(
     @InjectModel(Media.name) private mediaModel: Model<MediaDocument>,
     @InjectModel(Imdb.name) private imdbModel: Model<ImdbDocument>,
@@ -247,26 +248,31 @@ export class MediasService {
     return;
   }
 
-  @Cron('36 13 * * *')
+  @Cron('51 19 * * *')
   async sendNotificationsToLine() {
-    const respUser = await this.authService.findAll();
-    const users = respUser.data;
-    const findLineUsers = users.filter((val) => {
-      return val.identities.find((iden) => iden.provider === 'line');
-    });
-
-    for (const user of findLineUsers) {
-      const userIdentity = user.identities?.find(
-        (val) => val.provider === 'line',
-      );
-      console.log('1');
-      this.lineService.pushMessage(userIdentity.user_id, {
-        type: 'text',
-        text: 'test',
+    try {
+      this.logger.log('start line noti');
+      const respUser = await this.authService.findAll();
+      const users = respUser.data;
+      const findLineUsers = users.filter((val) => {
+        return val.identities.find((iden) => iden.provider === 'line');
       });
-    }
 
-    return;
+      for (const user of findLineUsers) {
+        const userIdentity = user.identities?.find(
+          (val) => val.provider === 'line',
+        );
+        this.logger.log(user);
+        this.lineService.pushMessage(userIdentity.user_id, {
+          type: 'text',
+          text: 'test',
+        });
+      }
+
+      return;
+    } catch (err) {
+      this.logger.error(err);
+    }
   }
   @Cron('10 19 * * *')
   async test() {

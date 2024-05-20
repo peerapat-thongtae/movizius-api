@@ -13,6 +13,15 @@ export class Imdb {
   @Prop({ type: String })
   ratings: string;
 
+  @Prop({ type: Types.Array, default: [] })
+  ids: string[];
+
+  @Prop({ type: String, index: true })
+  min_id: string;
+
+  @Prop({ type: String, index: true })
+  max_id: string;
+
   @Prop({
     type: Date,
     default: new Date(),

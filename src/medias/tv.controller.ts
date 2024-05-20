@@ -29,6 +29,11 @@ export class TVController {
     );
   }
 
+  @Post('episodes')
+  updateEpisodeWatched(@Body() createMediaDto: any, @Req() req) {
+    return this.mediasService.updateTVEpisodes(createMediaDto, req.user?.sub);
+  }
+
   @Get()
   findAll(@Req() req) {
     return this.mediasService.findAll(req?.user?.sub, this.mediaType);

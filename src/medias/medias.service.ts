@@ -9,15 +9,7 @@ import { Model } from 'mongoose';
 import { TMDBService } from './tmdb.service';
 import { getDownloadUrl, list } from '@vercel/blob';
 import axios from 'axios';
-import {
-  pickBy,
-  range,
-  startsWith,
-  toArray,
-  chunk,
-  orderBy,
-  take,
-} from 'lodash';
+import { chunk, first, last, orderBy, take, uniqBy } from 'lodash';
 import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
@@ -135,6 +127,36 @@ export class MediasService {
       }
     }
   }
+  async updateTVEpisodes(payload: any, userId: string) {
+    const id = payload.id;
+    let episode_watched = payload.episode_watched || [];
+
+    episode_watched = episode_watched.map((val: any) => ({
+      ...val,
+      watched_at: new Date(),
+    }));
+
+    const findMedia = await this.mediaModel.findOne({
+      id,
+      media_type: 'tv',
+    });
+
+    if (findMedia) {
+      const combineWatched = [...findMedia.episode_watched, ...episode_watched];
+      const uniq = uniqBy(combineWatched, (v) =>
+        [v.season_number, v.episode_number].join('-'),
+      );
+      await this.update(id, { episode_watched: uniq }, 'tv');
+    } else {
+      await this.mediaModel.create({
+        id,
+        media_type: 'tv',
+        user_id: userId,
+        episode_watched: episode_watched,
+        watchlisted_at: new Date(),
+      });
+    }
+  }
 
   async findAll(userId: string, mediaType: string) {
     // const a = await this.tmdbService.accountMovieWatchlist();
@@ -246,7 +268,7 @@ export class MediasService {
 
     return;
   }
-  @Cron('45 17 * * *')
+  @Cron('10 19 * * *')
   async test() {
     console.log('start');
     const resp: Media[] = await this.mediaModel.find({
@@ -287,19 +309,26 @@ export class MediasService {
   }
 
   async getImdbRating(imdbId: string) {
-    // const { url } = await get('articles/blob.txt', 'Hello World!', { access: 'public' });
-    const fileData = fs.readFileSync('imdb.json', 'utf-8');
-    const imdbs = JSON.parse(fileData);
-    // const imdbData: any[] = JSON.parse(fileData);
-    const findRating = imdbs.find((val: any) => val.id === imdbId);
+    const resp = await this.imdbModel.findOne({
+      ids: { $in: [imdbId] },
+    });
+
+    if (!resp) {
+      return;
+    }
+
+    const imdbDatas = JSON.parse(resp.ratings);
+    const findRating = imdbDatas.find((val: any) => val.id === imdbId);
     if (!findRating) {
       return;
     }
 
-    // return findRating;
+    return findRating;
+    // await this.updateIMDBDetail();
+    // return;
   }
 
-  // @Cron('18 10 * * *')
+  @Cron('40 19 * * *')
   async updateIMDBDetail() {
     try {
       console.log('start imdb');
@@ -333,8 +362,8 @@ export class MediasService {
           })
           .filter((val) => val.id && val.votes > 100 && val.rating > 2);
 
-        const sortDatas = orderBy(datas, 'votes', 'desc');
-        const newa = chunk(sortDatas, 10000);
+        const sortDatas = orderBy(datas, 'id', 'asc');
+        const newa = chunk(sortDatas, 1000);
 
         datasRes = resJSON;
 
@@ -342,6 +371,9 @@ export class MediasService {
           newa.map((val) => {
             return {
               ratings: JSON.stringify(val),
+              ids: val.map((data) => data.id),
+              min_id: first(val).id,
+              max_id: last(val).id,
             };
           }),
         );

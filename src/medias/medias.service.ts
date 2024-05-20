@@ -248,10 +248,10 @@ export class MediasService {
     return;
   }
 
-  @Cron('51 19 * * *')
+  @Cron('54 19 * * *')
   async sendNotificationsToLine() {
     try {
-      this.logger.log('start line noti');
+      this.logger.warn('start line noti');
       const respUser = await this.authService.findAll();
       const users = respUser.data;
       const findLineUsers = users.filter((val) => {
@@ -262,7 +262,7 @@ export class MediasService {
         const userIdentity = user.identities?.find(
           (val) => val.provider === 'line',
         );
-        this.logger.log(user);
+        this.logger.warn(user);
         this.lineService.pushMessage(userIdentity.user_id, {
           type: 'text',
           text: 'test',

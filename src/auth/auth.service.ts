@@ -11,6 +11,13 @@ export class AuthService {
     clientId: process.env.AUTH0_CLIENT_ID,
     clientSecret: process.env.AUTH0_CLIENT_SECRET,
   });
+  constructor() {
+    this.management = new ManagementClient({
+      domain: 'dev-dxsfu1ajem7xnzwi.us.auth0.com',
+      clientId: process.env.AUTH0_CLIENT_ID,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    });
+  }
   create(_createAuthDto: CreateAuthDto) {
     return 'This action adds a new auth';
   }

@@ -248,7 +248,7 @@ export class MediasService {
     return;
   }
 
-  @Cron('54 19 * * *')
+  @Cron('01 22 * * *')
   async sendNotificationsToLine() {
     try {
       this.logger.warn('start line noti');

@@ -72,6 +72,24 @@ MediaSchema.set('toJSON', {
   transform: function (doc, ret) {
     // ret.id = ret._id;
     delete ret._id;
+    ret.id = Number(ret.id);
+    ret.account_status = '';
+    if (ret.media_type === 'movie') {
+      if (ret.watchlist || ret.watched) {
+        ret.account_status = ret.watchlist
+          ? 'watchlist'
+          : ret.watched && 'watched';
+      }
+    } else {
+      if (ret.number_of_episodes === ret.episode_watched.length) {
+        console.log(ret);
+        ret.account_status = 'watched';
+      } else if (ret.episode_watched.length > 0) {
+        ret.account_status = 'watching';
+      } else {
+        ret.account_status = 'watchlist';
+      }
+    }
     // delete ret.user_id;
     delete ret.__v;
   },

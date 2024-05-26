@@ -59,14 +59,16 @@ export class MediasService {
       }
 
       if (!findMedia) {
-        await this.mediaModel.create({
+        const payload = {
           id,
           media_type: mediaType,
           user_id: userId,
           ...objStatus,
-        });
+        };
+        return this.mediaModel.create(payload);
+        return payload;
       } else {
-        await this.mediaModel.updateOne(
+        return await this.mediaModel.updateOne(
           { id, media_type: mediaType },
           {
             ...objStatus,
@@ -76,7 +78,6 @@ export class MediasService {
     } else {
       if (createMediaDto.status === 'watched') {
         const detail = await this.tmdbService.tvInfo(createMediaDto.id);
-        console.log(detail);
 
         const ep_watched = [];
         const filterSeasons = detail.seasons.filter(
@@ -102,28 +103,30 @@ export class MediasService {
         }
 
         if (findMedia) {
-          await this.update(
+          const res = await this.update(
             createMediaDto.id,
             { episode_watched: ep_watched },
             'tv',
           );
         } else {
-          await this.mediaModel.create({
+          const resp = await this.mediaModel.create({
             id,
             media_type: mediaType,
             user_id: userId,
             episode_watched: ep_watched,
           });
+          return resp.toJSON();
         }
       } else {
         if (!findMedia) {
-          await this.mediaModel.create({
+          const resp = await this.mediaModel.create({
             id,
             media_type: mediaType,
             user_id: userId,
             episode_watched: [],
             watchlisted_at: new Date(),
           });
+          return resp.toJSON();
         }
       }
     }
@@ -147,15 +150,17 @@ export class MediasService {
       const uniq = uniqBy(combineWatched, (v) =>
         [v.season_number, v.episode_number].join('-'),
       );
-      await this.update(id, { episode_watched: uniq }, 'tv');
+      return await this.update(id, { episode_watched: uniq }, 'tv');
     } else {
-      await this.mediaModel.create({
+      const payload = {
         id,
         media_type: 'tv',
         user_id: userId,
         episode_watched: episode_watched,
         watchlisted_at: new Date(),
-      });
+      };
+      const resp = await this.mediaModel.create(payload);
+      return payload;
     }
   }
 
@@ -208,7 +213,6 @@ export class MediasService {
 
   async random(userId: string, mediaType: string) {
     // const a = await this.tmdbService.accountMovieWatchlist();
-    console.log('fu', mediaType);
     const resp: Media[] = await this.mediaModel.aggregate([
       {
         $match: {
@@ -237,10 +241,12 @@ export class MediasService {
   }
 
   async update(id: string, updateMediaDto: any, mediaType: string) {
-    await this.mediaModel.updateOne(
+    const resp = await this.mediaModel.findOneAndUpdate(
       { id, media_type: mediaType },
       updateMediaDto,
+      { new: true },
     );
+    return resp.toJSON();
   }
 
   async remove(id: string, mediaType: string) {

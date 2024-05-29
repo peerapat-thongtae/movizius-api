@@ -7,6 +7,7 @@ import { MediasModule } from './medias/medias.module';
 import { LineModule } from './line/line.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MongooseModule } from '@nestjs/mongoose';
         };
       },
     }),
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],

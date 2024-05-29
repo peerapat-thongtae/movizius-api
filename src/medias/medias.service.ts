@@ -268,7 +268,6 @@ export class MediasService {
         const userIdentity = user.identities?.find(
           (val) => val.provider === 'line',
         );
-        this.logger.warn(user);
         this.lineService.pushMessage(userIdentity.user_id, {
           type: 'text',
           text: 'test',
@@ -277,7 +276,7 @@ export class MediasService {
 
       return;
     } catch (err) {
-      this.logger.error(err);
+      // this.logger.error(err);
     }
   }
   @Cron('10 19 * * *')

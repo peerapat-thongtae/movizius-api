@@ -39,6 +39,7 @@ export class Media {
 
   @Prop({ type: Types.Array, default: [] })
   episode_watched: {
+    episode_id?: number;
     season_number: number;
     episode_number: number;
     watched_at: Date;

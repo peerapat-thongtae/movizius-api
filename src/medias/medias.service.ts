@@ -9,7 +9,7 @@ import { Model } from 'mongoose';
 import { TMDBService } from './tmdb.service';
 import { getDownloadUrl, list } from '@vercel/blob';
 import axios from 'axios';
-import { chunk, first, last, orderBy, take, uniqBy } from 'lodash';
+import { chunk, first, last, orderBy, sum, sumBy, take, uniqBy } from 'lodash';
 import * as fs from 'node:fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const gz = require('gunzip-file');
@@ -299,9 +299,7 @@ export class MediasService {
         },
         'tv',
       );
-      // return;
     }
-    console.log(resp.length);
   }
 
   async getAllImdbRatings() {

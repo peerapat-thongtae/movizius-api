@@ -11,9 +11,15 @@ import { RatingController } from './rating.controller';
 import { Media, MediaSchema } from './schema/medias.schema';
 import { Imdb, ImdbSchema } from './schema/imdb.schema';
 import { HttpModule, HttpService } from '@nestjs/axios';
+import { AnimeController } from './anime.controller';
 
 @Module({
-  controllers: [MovieController, TVController, RatingController],
+  controllers: [
+    MovieController,
+    TVController,
+    RatingController,
+    AnimeController,
+  ],
   imports: [
     LineModule,
     HttpModule,

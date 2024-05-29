@@ -19,6 +19,7 @@ export class ChatbotController {
 
   @Get('webhook')
   webhook(@Req() request, @Res() response) {
+    console.log('hooks');
     const agent = this.chatbotService.initFulfillment(request, response);
     console.log('agent', agent);
     return 1;

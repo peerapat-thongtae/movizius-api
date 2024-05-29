@@ -19,15 +19,17 @@ export class ChatbotController {
 
   @Post('webhook')
   webhook(@Req() request, @Res() response) {
-    console.log('hooks');
     const agent = this.chatbotService.initFulfillment(request, response);
 
     const welcome = () => {
-      agent.add('hrrrrr');
+      agent.add(agent.intent);
     };
-
+    console.log('hooks', agent);
+    console.log(agent.locale);
+    console.log('agent');
     const intentMap = new Map();
     intentMap.set('Default Welcome Intent', welcome);
+    agent.locale;
     agent.handleRequest(intentMap);
     return 1;
   }

@@ -17,7 +17,7 @@ import { UpdateChatbotDto } from './dto/update-chatbot.dto';
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 
-  @Get('webhook')
+  @Post('webhook')
   webhook(@Req() request, @Res() response) {
     console.log('hooks');
     const agent = this.chatbotService.initFulfillment(request, response);

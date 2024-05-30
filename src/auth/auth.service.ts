@@ -7,13 +7,13 @@ import { ManagementClient } from 'auth0';
 @Injectable()
 export class AuthService {
   private management = new ManagementClient({
-    domain: 'dev-dxsfu1ajem7xnzwi.us.auth0.com',
+    domain: process.env.AUTH0_DOMAIN1,
     clientId: process.env.AUTH0_CLIENT_ID,
     clientSecret: process.env.AUTH0_CLIENT_SECRET,
   });
   constructor() {
     this.management = new ManagementClient({
-      domain: 'dev-dxsfu1ajem7xnzwi.us.auth0.com',
+      domain: process.env.AUTH0_DOMAIN1,
       clientId: process.env.AUTH0_CLIENT_ID,
       clientSecret: process.env.AUTH0_CLIENT_SECRET,
     });

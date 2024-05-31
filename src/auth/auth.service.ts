@@ -26,6 +26,15 @@ export class AuthService {
     return this.management.users.getAll();
   }
 
+  async findByLineId(lineId: string) {
+    const resp = await this.management.users.getAll({
+      // q: `identities.provider:line`,
+      q: `identities.user_id:${lineId}`,
+    });
+    const users = resp.data;
+    return users?.[0]?.user_id;
+  }
+
   findOne(id: string) {
     try {
       return this.management.users.get({ id: id });

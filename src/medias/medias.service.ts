@@ -7,12 +7,10 @@ import { AuthService } from 'src/auth/auth.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TMDBService } from './tmdb.service';
-import { getDownloadUrl, list } from '@vercel/blob';
 import axios from 'axios';
-import { chunk, first, last, orderBy, sum, sumBy, take, uniqBy } from 'lodash';
+import { chunk, first, last, orderBy, take, uniqBy } from 'lodash';
 import * as fs from 'node:fs';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const gz = require('gunzip-file');
+
 import { tsvJSON } from '../shared/helpers';
 import { Media, MediaDocument } from './schema/medias.schema';
 import { Imdb, ImdbDocument } from './schema/imdb.schema';
@@ -42,6 +40,7 @@ export class MediasService {
     const findMedia = await this.mediaModel.findOne({
       id,
       media_type: mediaType,
+      userId: userId,
     });
 
     if (mediaType === 'movie') {
@@ -107,6 +106,7 @@ export class MediasService {
             createMediaDto.id,
             { episode_watched: ep_watched },
             'tv',
+            userId,
           );
         } else {
           const resp = await this.mediaModel.create({
@@ -150,7 +150,7 @@ export class MediasService {
       const uniq = uniqBy(combineWatched, (v) =>
         [v.season_number, v.episode_number].join('-'),
       );
-      return await this.update(id, { episode_watched: uniq }, 'tv');
+      return await this.update(id, { episode_watched: uniq }, 'tv', userId);
     } else {
       const payload = {
         id,
@@ -211,7 +211,12 @@ export class MediasService {
     };
   }
 
-  async random(userId: string, mediaType: string) {
+  async random(
+    userId: string,
+    mediaType: string,
+    randomSize: number = 10,
+    status?: string,
+  ) {
     // const a = await this.tmdbService.accountMovieWatchlist();
     const resp: Media[] = await this.mediaModel.aggregate([
       {
@@ -219,12 +224,17 @@ export class MediasService {
           $and: [
             { user_id: userId },
             { media_type: mediaType },
-            { watchlist: true },
+            status && {
+              watchlist: status === 'watchlist',
+              watched: status === 'watched',
+            },
           ],
         },
       },
-      { $sample: { size: 10 } },
+      { $sample: { size: randomSize } },
     ]);
+
+    console.log('res', resp.length);
     return {
       results: resp,
       total_results: resp.length,
@@ -240,9 +250,27 @@ export class MediasService {
     });
   }
 
-  async update(id: string, updateMediaDto: any, mediaType: string) {
+  async getMediaByStatus(
+    media_type: string,
+    status: 'watchlist' | 'watched' | 'watching',
+  ) {
+    const findObj = {
+      media_type,
+      watchlist: status === 'watchlist' ? true : false,
+      watched: status === 'watched' ? true : false,
+    };
+    const medias = await this.mediaModel.find(findObj);
+    return medias;
+  }
+
+  async update(
+    id: string,
+    updateMediaDto: any,
+    mediaType: string,
+    userId?: string,
+  ) {
     const resp = await this.mediaModel.findOneAndUpdate(
-      { id, media_type: mediaType },
+      { id, media_type: mediaType, user_id: userId },
       updateMediaDto,
       { new: true },
     );
@@ -279,7 +307,7 @@ export class MediasService {
       // this.logger.error(err);
     }
   }
-  @Cron('10 19 * * *')
+  @Cron('29 13 * * *')
   async test() {
     console.log('start');
     const resp: Media[] = await this.mediaModel.find({
@@ -293,6 +321,7 @@ export class MediasService {
       await this.update(
         media.id,
         {
+          name: detail.name,
           number_of_seasons: detail.number_of_seasons,
           number_of_episodes: detail.number_of_episodes,
         },
@@ -300,21 +329,28 @@ export class MediasService {
       );
     }
   }
+  @Cron('44 13 * * *')
+  async updateMovies() {
+    const resp: Media[] = await this.mediaModel.find({
+      // user_id: userId,
+      media_type: 'movie',
+    });
+
+    for (const media of resp) {
+      const detail = await this.tmdbService.movieInfo(media.id);
+      await this.update(
+        media.id,
+        {
+          name: detail.title,
+        },
+        'movie',
+      );
+    }
+  }
 
   async getAllImdbRatings() {
-    const listFiles = await list();
-
-    const data = await this.httpService.axiosRef.get(
-      listFiles.blobs?.[0].downloadUrl,
-      {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      },
-    );
-
-    return take(data.data, 4);
+    const ratings = await this.imdbModel.find();
+    return ratings;
   }
 
   async getImdbRating(imdbId: string) {

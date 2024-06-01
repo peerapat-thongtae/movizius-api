@@ -24,6 +24,11 @@ export class RatingController {
     return this.mediasService.getAllImdbRatings();
   }
 
+  @Post('/imdb')
+  getImdbRatingByIds(@Body() body) {
+    return this.mediasService.getImdbRatingByIds(body.ids);
+  }
+
   @Get('/imdb/:id')
   getImdbRating(@Param('id') id: string) {
     return this.mediasService.getImdbRating(id);

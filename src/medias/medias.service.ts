@@ -353,6 +353,20 @@ export class MediasService {
     return ratings;
   }
 
+  async getImdbRatingByIds(imdbIds: string[]) {
+    const resp = await this.imdbModel.find({
+      ids: { $in: imdbIds },
+    });
+
+    const imdbDatas = [];
+    for (const row of resp) {
+      const ratings = JSON.parse(row.ratings);
+      const findRatings = ratings.filter((val) => imdbIds.includes(val.id));
+      imdbDatas.push(...findRatings);
+    }
+    return imdbDatas;
+  }
+
   async getImdbRating(imdbId: string) {
     const resp = await this.imdbModel.findOne({
       ids: { $in: [imdbId] },
@@ -369,8 +383,6 @@ export class MediasService {
     }
 
     return findRating;
-    // await this.updateIMDBDetail();
-    // return;
   }
 
   @Cron('40 19 * * *')

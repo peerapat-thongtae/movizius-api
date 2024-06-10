@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { maxBy, orderBy, sortBy } from 'lodash';
 import { Document, Types } from 'mongoose';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const paginate = require('mongoose-paginate-v2');
@@ -68,13 +69,14 @@ export class Media {
 
 export const MediaSchema = SchemaFactory.createForClass(Media);
 MediaSchema.plugin(paginate);
-MediaSchema.index({}, { unique: true });
+MediaSchema.index({ id: 1, media_type: 1, user_id: 1 }, { unique: true });
 MediaSchema.set('toJSON', {
   transform: function (doc, ret) {
     // ret.id = ret._id;
     delete ret._id;
     ret.id = Number(ret.id);
     ret.account_status = '';
+    ret.latest_watched = maxBy(ret.episode_watched, 'watched_at') || null;
     if (ret.media_type === 'movie') {
       if (ret.watchlist || ret.watched) {
         ret.account_status = ret.watchlist

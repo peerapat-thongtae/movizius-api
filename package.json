@@ -41,6 +41,7 @@
     "axios": "^1.6.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "convert-csv-to-json": "^2.47.0",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
     "date-fns-tz": "^2.0.1",

@@ -92,7 +92,6 @@ export class LineService {
   // }
 
   test(lineUserId: string) {
-    console.log('line user', lineUserId);
     return this.pushMessage(lineUserId, { type: 'text', text: 'test' });
   }
 }

@@ -24,8 +24,6 @@ export class ChatbotController {
   @Post('webhook')
   webhook(@Req() request, @Res() response) {
     const agent = this.chatbotService.initFulfillment(request, response);
-    console.log('hooks', agent.intent);
-    console.log('param', agent.parameters);
     const intentName = agent.intent;
     const param = agent.parameters;
     const intentMap = new Map();

@@ -68,6 +68,9 @@ dependencies:
   class-validator:
     specifier: ^0.14.1
     version: 0.14.1
+  convert-csv-to-json:
+    specifier: ^2.47.0
+    version: 2.47.0
   cors:
     specifier: ^2.8.5
     version: 2.8.5
@@ -2695,6 +2698,10 @@ packages:
   /content-type@1.0.5:
     resolution: {integrity: sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==}
     engines: {node: '>= 0.6'}
+
+  /convert-csv-to-json@2.47.0:
+    resolution: {integrity: sha512-84H15RZ4StyBWaa0Oo91PEsN1kIfS8O4XzPGqt/SPcCGvt6B9GoEOgCCebCe+ITkyxyUMtySbCvSM+h/p8QY4Q==}
+    dev: false
 
   /convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}

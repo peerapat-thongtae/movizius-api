@@ -8,6 +8,7 @@ import {
   Delete,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { MediasService } from './medias.service';
 import { CreateMediaDto } from './dto/create-media.dto';
@@ -47,6 +48,18 @@ export class TVController {
       status,
       Number(req.query?.page),
     );
+  }
+
+  @Get('tv-watching')
+  paginateWatching(@Query('page') page: number, @Req() req) {
+    return this.mediasService.paginateTVWatching(req?.user?.sub, page);
+  }
+
+  @Get('test')
+  async test(@Query('page') page: number, @Req() req) {
+    return this.mediasService.updatetest();
+    const a = await this.mediasService.findAll(req.user?.sub, 'tv');
+    return a.results.map((val) => ({ name: val.name, id: val.id }));
   }
 
   @Get(':id')

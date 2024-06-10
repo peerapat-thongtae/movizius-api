@@ -5,16 +5,20 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { LineService } from 'src/line/line.service';
 import { AuthService } from 'src/auth/auth.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { TMDBService } from './tmdb.service';
 import axios from 'axios';
-import { chunk, first, last, orderBy, take, uniqBy } from 'lodash';
+import { ceil, chunk, first, last, orderBy, take, uniqBy } from 'lodash';
 import * as fs from 'node:fs';
 
-import { tsvJSON } from '../shared/helpers';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const csvToJson = require('convert-csv-to-json');
+
+import { csvJSON, tsvJSON } from '../shared/helpers';
 import { Media, MediaDocument } from './schema/medias.schema';
 import { Imdb, ImdbDocument } from './schema/imdb.schema';
 import { HttpService } from '@nestjs/axios';
+import { lastValueFrom, map } from 'rxjs';
 // import zlib from 'zlib';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const zlib = require('zlib');
@@ -40,7 +44,7 @@ export class MediasService {
     const findMedia = await this.mediaModel.findOne({
       id,
       media_type: mediaType,
-      userId: userId,
+      user_id: userId,
     });
 
     if (mediaType === 'movie') {
@@ -67,12 +71,7 @@ export class MediasService {
         return this.mediaModel.create(payload);
         return payload;
       } else {
-        return await this.mediaModel.updateOne(
-          { id, media_type: mediaType },
-          {
-            ...objStatus,
-          },
-        );
+        return await this.update(id, objStatus, mediaType, userId);
       }
     } else {
       if (createMediaDto.status === 'watched') {
@@ -121,6 +120,7 @@ export class MediasService {
         if (!findMedia) {
           const resp = await this.mediaModel.create({
             id,
+            name: createMediaDto.name,
             media_type: mediaType,
             user_id: userId,
             episode_watched: [],
@@ -211,6 +211,54 @@ export class MediasService {
     };
   }
 
+  async paginateTVWatching(userId: string, page: number = 1) {
+    const limit = 20;
+    const skip = limit * (page - 1);
+    const query: PipelineStage[] = [
+      {
+        $addFields: {
+          latest_watch: { $max: '$episode_watched.watched_at' },
+          count_watched: { $size: '$episode_watched' },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            { user_id: userId },
+            { media_type: 'tv' },
+            { 'episode_watched.0': { $exists: true } },
+            // { $expr: { $eq: ['$count_watched', '$number_of_episodes'] } }, Watched
+            { $expr: { $lt: ['$count_watched', '$number_of_episodes'] } },
+          ],
+        },
+      },
+      {
+        $sort: { 'episode_watched.watched_at': -1 },
+      },
+    ];
+
+    const paginatationQuery: PipelineStage[] = [
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ];
+
+    const totalQuery = await this.mediaModel.aggregate(query);
+    const filter: Media[] = await this.mediaModel.aggregate([
+      ...query,
+      ...paginatationQuery,
+    ]);
+
+    return {
+      results: filter,
+      total_results: totalQuery.length,
+      total_pages: ceil(totalQuery.length / limit),
+    };
+  }
+
   async random(
     userId: string,
     mediaType: string,
@@ -234,7 +282,6 @@ export class MediasService {
       { $sample: { size: randomSize } },
     ]);
 
-    console.log('res', resp.length);
     return {
       results: resp,
       total_results: resp.length,
@@ -274,7 +321,7 @@ export class MediasService {
       updateMediaDto,
       { new: true },
     );
-    return resp.toJSON();
+    return resp;
   }
 
   async remove(id: string, mediaType: string) {
@@ -304,12 +351,11 @@ export class MediasService {
 
       return;
     } catch (err) {
-      // this.logger.error(err);
+      this.logger.error(err);
     }
   }
   @Cron('29 13 * * *')
   async test() {
-    console.log('start');
     const resp: Media[] = await this.mediaModel.find({
       // user_id: userId,
       media_type: 'tv',
@@ -317,7 +363,6 @@ export class MediasService {
 
     for (const media of resp) {
       const detail = await this.tmdbService.tvInfo(media.id);
-      console.log(detail.id);
       await this.update(
         media.id,
         {
@@ -388,7 +433,6 @@ export class MediasService {
   @Cron('40 19 * * *')
   async updateIMDBDetail() {
     try {
-      console.log('start imdb');
       const res = await axios.get(
         'https://datasets.imdbws.com/title.ratings.tsv.gz',
         {
@@ -442,5 +486,95 @@ export class MediasService {
     } catch (err) {
       return err;
     }
+  }
+
+  async updatetest() {
+    // return res.data;
+    const arr = csvToJson.fieldDelimiter(',').getJsonFromCsv('ratings.csv');
+
+    // TV Episodes
+    const case1 = arr.filter((val) => val.Type === 'tv' && val.EpisodeNumber);
+    for (let i = 0; i < case1.length; i++) {
+      const tv = case1[i];
+      const resp = await this.mediaModel.aggregate([
+        { $match: { 'episode_watched.episode_id': +tv.TMDbID } },
+      ]);
+      const media = resp?.[0];
+      if (media) {
+        const newEP = [];
+        for (const ep of media.episode_watched) {
+          if (ep.episode_id === +tv.TMDbID) {
+            if (tv.DateRated) {
+              ep.watched_at = new Date(tv.DateRated);
+            }
+          }
+          newEP.push(ep);
+        }
+
+        await this.mediaModel.findOneAndUpdate(
+          {
+            id: media.id,
+            media_type: 'tv',
+          },
+          { episode_watched: newEP },
+          { new: true },
+        );
+      }
+    }
+
+    return case1;
+  }
+
+  async updateEPNumber() {
+    const medias = await this.mediaModel.find({ media_type: 'tv' });
+    for (const media of medias) {
+      if (media.episode_watched.length > 0) {
+        const newEP = [];
+        let notId = false;
+
+        if (media.episode_watched.find((val) => !val.episode_id)) {
+          const eps = [];
+          for (let i = 1; i <= media.number_of_seasons; i++) {
+            const ss = await this.tmdbService
+              .seasonInfo({
+                season_number: i,
+                id: media.id,
+              })
+              .catch(() => null);
+
+            if (ss) {
+              eps.push(...ss.episodes);
+            }
+          }
+          for (const ep of media.episode_watched) {
+            if (!ep.episode_id) {
+              const info = eps.find(
+                (val) =>
+                  val.episode_number === ep.episode_number &&
+                  val.season_number === ep.season_number,
+              );
+              if (info) {
+                ep.episode_id = info?.id;
+              }
+              notId = true;
+              newEP.push(ep);
+            } else {
+              newEP.push(ep);
+            }
+          }
+          if (notId) {
+            await this.mediaModel.findOneAndUpdate(
+              {
+                id: media.id,
+                media_type: 'tv',
+              },
+              { episode_watched: newEP },
+              { new: true },
+            );
+          }
+        }
+      }
+    }
+    return medias.length;
   }
 }

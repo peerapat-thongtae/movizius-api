@@ -27,6 +27,11 @@ export class AuthService {
   }
 
   async findByLineId(lineId: string) {
+    this.management = new ManagementClient({
+      domain: process.env.AUTH0_DOMAIN1,
+      clientId: process.env.AUTH0_CLIENT_ID,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    });
     const resp = await this.management.users.getAll({
       // q: `identities.provider:line`,
       q: `identities.user_id:${lineId}`,
@@ -36,6 +41,11 @@ export class AuthService {
   }
 
   findOne(id: string) {
+    this.management = new ManagementClient({
+      domain: process.env.AUTH0_DOMAIN1,
+      clientId: process.env.AUTH0_CLIENT_ID,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    });
     try {
       return this.management.users.get({ id: id });
     } catch (err) {

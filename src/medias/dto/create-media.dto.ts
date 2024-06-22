@@ -1,4 +1,4 @@
-import { TodoStatusEnum } from 'src/medias/enum/todo-status.enum';
+import { TodoStatusEnum } from '../../medias/enum/todo-status.enum';
 
 export class CreateMediaDto {
   id: string;

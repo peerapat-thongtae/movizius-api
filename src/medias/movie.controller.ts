@@ -13,7 +13,7 @@ import { MediasService } from './medias.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { TodoStatusEnum } from 'src/medias/enum/todo-status.enum';
+import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 
 @Controller('movie')
 @UseGuards(AuthGuard('jwt'))

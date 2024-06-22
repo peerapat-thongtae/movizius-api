@@ -2,8 +2,8 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateChatbotDto } from './dto/create-chatbot.dto';
 import { UpdateChatbotDto } from './dto/update-chatbot.dto';
 import { WebhookClient } from 'dialogflow-fulfillment';
-import { MediasService } from 'src/medias/medias.service';
-import { TMDBService } from 'src/medias/tmdb.service';
+import { MediasService } from '../medias/medias.service';
+import { TMDBService } from '../medias/tmdb.service';
 import { HttpService } from '@nestjs/axios';
 @Injectable()
 export class ChatbotService {

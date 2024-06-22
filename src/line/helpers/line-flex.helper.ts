@@ -1,6 +1,6 @@
 import { FlexBubble, FlexCarousel, FlexMessage } from '@line/bot-sdk';
 import { MovieResponse, ShowResponse } from 'moviedb-promise';
-import { MediaTypeEnum } from 'src/medias/enum/media-type.enum';
+import { MediaTypeEnum } from '../../medias/enum/media-type.enum';
 
 export const movieDetailFlex = (
   movie: MovieResponse & ShowResponse,

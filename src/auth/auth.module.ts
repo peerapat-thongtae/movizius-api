@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategy/jwt.strategy';
-import { MediasModule } from 'src/medias/medias.module';
+import { MediasModule } from '../medias/medias.module';
 @Module({
   imports: [
     forwardRef(() => MediasModule),

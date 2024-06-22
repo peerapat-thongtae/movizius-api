@@ -18,8 +18,8 @@ import { csvJSON, tsvJSON } from '../shared/helpers';
 import { Media, MediaDocument } from './schema/medias.schema';
 import { Imdb, ImdbDocument } from './schema/imdb.schema';
 import { HttpService } from '@nestjs/axios';
-import { TodoStatusEnum } from 'src/medias/enum/todo-status.enum';
-import { MediaTypeEnum } from 'src/medias/enum/media-type.enum';
+import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
+import { MediaTypeEnum } from '../medias/enum/media-type.enum';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const zlib = require('zlib');
 

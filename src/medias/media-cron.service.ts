@@ -4,13 +4,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
 import { Model } from 'mongoose';
-import { AuthService } from 'src/auth/auth.service';
-import { LineService } from 'src/line/line.service';
+import { AuthService } from '../auth/auth.service';
+import { LineService } from '../line/line.service';
 import { MediasService } from '../medias/medias.service';
 import { Imdb, ImdbDocument } from '../medias/schema/imdb.schema';
 import { Media, MediaDocument } from '../medias/schema/medias.schema';
 import { TMDBService } from '../medias/tmdb.service';
-import { tsvJSON } from 'src/shared/helpers';
+import { tsvJSON } from '../shared/helpers';
 import * as fs from 'node:fs';
 import { chunk, first, last, orderBy } from 'lodash';
 

@@ -9,7 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { MongoModule } from './databases/mongo.module';
-import { PostgresModule } from 'src/databases/postgres.module';
+import { PostgresModule } from './databases/postgres.module';
 
 @Module({
   imports: [

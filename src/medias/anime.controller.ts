@@ -8,11 +8,13 @@ import {
   Delete,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { MediasService } from './medias.service';
-import { CreateMediaDto } from './dto/create-media.dto';
+import { CreateMediaDto, UpdateTVEpisodeDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { TodoStatusEnum } from 'src/medias/enum/todo-status.enum';
 
 @Controller('anime')
 @UseGuards(AuthGuard('jwt'))
@@ -30,8 +32,11 @@ export class AnimeController {
   }
 
   @Post('episodes')
-  updateEpisodeWatched(@Body() createMediaDto: any, @Req() req) {
-    return this.mediasService.updateTVEpisodes(createMediaDto, req.user?.sub);
+  updateEpisodeWatched(
+    @Body() updateEpisodeDto: UpdateTVEpisodeDto,
+    @Req() req,
+  ) {
+    return this.mediasService.updateTVEpisodes(updateEpisodeDto, req.user?.sub);
   }
 
   @Get()
@@ -40,13 +45,16 @@ export class AnimeController {
   }
 
   @Get('paginate/:status')
-  paginate(@Param('status') status: string, @Req() req) {
-    return this.mediasService.paginateByStatus(
-      req?.user?.sub,
-      this.mediaType,
+  paginate(
+    @Query('page') page: number,
+    @Param('status') status: TodoStatusEnum,
+    @Req() req,
+  ) {
+    return this.mediasService.paginateTVByStatus({
+      userId: req?.user?.sub,
       status,
-      Number(req.query?.page),
-    );
+      page,
+    });
   }
 
   @Get(':id')

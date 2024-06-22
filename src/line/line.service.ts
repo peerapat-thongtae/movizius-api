@@ -7,8 +7,6 @@ import { MediaTypeEnum } from '../medias/enum/media-type.enum';
 import { MediasService } from '../medias/medias.service';
 import { TMDBService } from '../medias/tmdb.service';
 import dayjs from 'dayjs';
-// import { TodoStatus } from 'todos/enum/todo-status.enum';
-// import { TodosService } from 'todos/todos.service';
 import { carouselMessage, IMovieLineCard } from './helpers/line-flex.helper';
 import LineClient from './line.config';
 
@@ -30,7 +28,7 @@ export class LineService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
   async handleEvents(events: WebhookEvent[]) {
-    const promises: readonly any[] = [];
+    const promises: readonly unknown[] = [];
     events.map((event: WebhookEvent) => {
       // switch (event.type) {
       //   case 'message': {
@@ -50,11 +48,7 @@ export class LineService {
   }
 
   replyMessage(message: Message | Message[]) {
-    try {
-      return this.client.replyMessage(this.replyToken, message);
-    } catch (err) {
-      console.log(err);
-    }
+    return this.client.replyMessage(this.replyToken, message);
   }
 
   // @Cron('44 22 * * *')

@@ -1,10 +1,10 @@
-export function tsvJSON(tsv: any) {
+export function tsvJSON(tsv: string) {
   const lines = tsv.split('\n');
   const result = [];
   const headers = lines[0].split('\t');
 
   for (let i = 1; i < lines.length; i++) {
-    const obj: any = {};
+    const obj = {};
     const currentline = lines[i].split('\t');
 
     for (let j = 0; j < headers.length; j++) {
@@ -17,7 +17,7 @@ export function tsvJSON(tsv: any) {
   return result;
 }
 
-export function csvJSON(csv: any) {
+export function csvJSON(csv: string) {
   const lines = csv.split('\n');
 
   const result = [];
@@ -29,7 +29,7 @@ export function csvJSON(csv: any) {
   const headers = lines[0].split(',');
 
   for (let i = 1; i < lines.length; i++) {
-    const obj: any = {};
+    const obj = {};
     const currentline = lines[i].split(',');
 
     for (let j = 0; j < headers.length; j++) {

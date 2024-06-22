@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { CreateMediaDto } from './dto/create-media.dto';
+import { CreateMediaDto, UpdateTVEpisodeDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { LineService } from 'src/line/line.service';
@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage } from 'mongoose';
 import { TMDBService } from './tmdb.service';
 import axios from 'axios';
-import { ceil, chunk, first, last, orderBy, take, uniqBy } from 'lodash';
+import { ceil, chunk, first, last, orderBy, uniqBy } from 'lodash';
 import * as fs from 'node:fs';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -18,8 +18,8 @@ import { csvJSON, tsvJSON } from '../shared/helpers';
 import { Media, MediaDocument } from './schema/medias.schema';
 import { Imdb, ImdbDocument } from './schema/imdb.schema';
 import { HttpService } from '@nestjs/axios';
-import { lastValueFrom, map } from 'rxjs';
-// import zlib from 'zlib';
+import { TodoStatusEnum } from 'src/medias/enum/todo-status.enum';
+import { MediaTypeEnum } from 'src/medias/enum/media-type.enum';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const zlib = require('zlib');
 
@@ -39,103 +39,129 @@ export class MediasService {
     private authService: AuthService,
   ) {}
 
-  async create(createMediaDto: any, mediaType: string, userId: string) {
-    const id = createMediaDto?.id || '';
+  async create(
+    createMediaDto: CreateMediaDto,
+    mediaType: string,
+    userId: string,
+  ): Promise<Media> {
+    if (mediaType === 'movie') {
+      return this.updateMovieState(createMediaDto, userId);
+    } else {
+      return this.updateTVState(createMediaDto, userId);
+    }
+  }
+
+  async updateMovieState(
+    createMediaDto: CreateMediaDto,
+    userId: string,
+  ): Promise<Media> {
+    const id = createMediaDto.id;
+    const findMovie = await this.mediaModel.findOne({
+      id,
+      media_type: 'movie',
+      user_id: userId,
+    });
+
+    const objStatus = {
+      watchlist: false,
+      watched: false,
+      watchlisted_at: findMovie?.watchlisted_at || null,
+      watched_at: findMovie?.watchlisted_at || null,
+    };
+
+    if (createMediaDto.status === 'watchlist') {
+      objStatus.watchlist = true;
+      objStatus.watched = false;
+      objStatus.watchlisted_at = new Date();
+    } else if (createMediaDto.status === 'watched') {
+      objStatus.watchlist = false;
+      objStatus.watched = true;
+      objStatus.watched_at = new Date();
+    }
+
+    if (!findMovie) {
+      const payload = {
+        id,
+        media_type: 'movie',
+        user_id: userId,
+        ...objStatus,
+      };
+      return this.mediaModel.create(payload);
+    } else {
+      return await this.update(id, objStatus, 'movie', userId);
+    }
+  }
+
+  async updateTVState(createMediaDto: CreateMediaDto, userId: string) {
+    const id = createMediaDto.id;
+    const mediaType = 'tv';
     const findMedia = await this.mediaModel.findOne({
       id,
       media_type: mediaType,
       user_id: userId,
     });
+    if (createMediaDto.status === 'watched') {
+      const detail = await this.tmdbService.tvInfo(createMediaDto.id);
 
-    if (mediaType === 'movie') {
-      const objStatus = {
-        watchlist: false,
-        watched: false,
-      };
-
-      if (createMediaDto.status === 'watchlist') {
-        objStatus.watchlist = true;
-        objStatus.watched = false;
-      } else if (createMediaDto.status === 'watched') {
-        objStatus.watchlist = false;
-        objStatus.watched = true;
+      const ep_watched = [];
+      const filterSeasons = detail.seasons.filter(
+        (val) => val.season_number !== 0,
+      );
+      for (const season of filterSeasons) {
+        for (let i = 1; i <= season.episode_count; i++) {
+          const findWatched = findMedia
+            ? findMedia.episode_watched.find(
+                (val) =>
+                  val.season_number === season.season_number &&
+                  val.episode_number === i,
+              )
+            : null;
+          if (!findWatched) {
+            ep_watched.push({
+              season_number: season.season_number,
+              episode_number: i,
+              watched_at: new Date(),
+            });
+          }
+        }
       }
 
-      if (!findMedia) {
-        const payload = {
+      if (findMedia) {
+        const res = await this.update(
+          createMediaDto.id,
+          { episode_watched: ep_watched },
+          'tv',
+          userId,
+        );
+      } else {
+        const resp = await this.mediaModel.create({
           id,
           media_type: mediaType,
           user_id: userId,
-          ...objStatus,
-        };
-        return this.mediaModel.create(payload);
-        return payload;
-      } else {
-        return await this.update(id, objStatus, mediaType, userId);
+          episode_watched: ep_watched,
+        });
+        return resp.toJSON();
       }
     } else {
-      if (createMediaDto.status === 'watched') {
-        const detail = await this.tmdbService.tvInfo(createMediaDto.id);
-
-        const ep_watched = [];
-        const filterSeasons = detail.seasons.filter(
-          (val) => val.season_number !== 0,
-        );
-        for (const season of filterSeasons) {
-          for (let i = 1; i <= season.episode_count; i++) {
-            const findWatched = findMedia
-              ? findMedia.episode_watched.find(
-                  (val) =>
-                    val.season_number === season.season_number &&
-                    val.episode_number === i,
-                )
-              : null;
-            if (!findWatched) {
-              ep_watched.push({
-                season_number: season.season_number,
-                episode_number: i,
-                watched_at: new Date(),
-              });
-            }
-          }
-        }
-
-        if (findMedia) {
-          const res = await this.update(
-            createMediaDto.id,
-            { episode_watched: ep_watched },
-            'tv',
-            userId,
-          );
-        } else {
-          const resp = await this.mediaModel.create({
-            id,
-            media_type: mediaType,
-            user_id: userId,
-            episode_watched: ep_watched,
-          });
-          return resp.toJSON();
-        }
-      } else {
-        if (!findMedia) {
-          const resp = await this.mediaModel.create({
-            id,
-            name: createMediaDto.name,
-            media_type: mediaType,
-            user_id: userId,
-            episode_watched: [],
-            watchlisted_at: new Date(),
-          });
-          return resp.toJSON();
-        }
+      if (!findMedia) {
+        const resp = await this.mediaModel.create({
+          id,
+          name: createMediaDto.name,
+          media_type: mediaType,
+          user_id: userId,
+          episode_watched: [],
+          watchlisted_at: new Date(),
+        });
+        return resp.toJSON();
       }
     }
   }
-  async updateTVEpisodes(payload: any, userId: string) {
+
+  async updateTVEpisodes(payload: UpdateTVEpisodeDto, userId: string) {
     const id = payload.id;
     let episode_watched = payload.episode_watched || [];
 
-    episode_watched = episode_watched.map((val: any) => ({
+    episode_watched = payload.episode_watched?.map((val) => ({
       ...val,
       watched_at: new Date(),
     }));
@@ -160,12 +186,11 @@ export class MediasService {
         watchlisted_at: new Date(),
       };
       const resp = await this.mediaModel.create(payload);
-      return payload;
+      return resp;
     }
   }
 
   async findAll(userId: string, mediaType: string) {
-    // const a = await this.tmdbService.accountMovieWatchlist();
     const resp: Media[] = await this.mediaModel.find({
       user_id: userId,
       media_type: mediaType,
@@ -178,30 +203,35 @@ export class MediasService {
     };
   }
 
-  async paginateByStatus(
+  async paginateMovieByStatus(
     userId: string,
-    mediaType: string,
-    status: string,
+    status: TodoStatusEnum,
     page: number,
   ) {
-    // const a = await this.tmdbService.accountMovieWatchlist();
-    const skip = 20 * page;
     const limit = 20;
+    const skip = limit * (page - 1);
     const total = await this.mediaModel.find({
       user_id: userId,
-      media_type: mediaType,
+      media_type: 'movie',
       watchlist: status === 'watchlist',
       watched: status === 'watched',
     });
     const resp: Media[] = await this.mediaModel.find(
       {
         user_id: userId,
-        media_type: mediaType,
+        media_type: 'movie',
         watchlist: status === 'watchlist',
         watched: status === 'watched',
       },
       {},
-      { skip: skip, limit: limit },
+      {
+        skip: skip,
+        limit: limit,
+        sort:
+          status === 'watchlist'
+            ? { watchlisted_at: -1, id: -1 }
+            : { watched_at: -1, id: -1 },
+      },
     );
 
     return {
@@ -211,7 +241,15 @@ export class MediasService {
     };
   }
 
-  async paginateTVWatching(userId: string, page: number = 1) {
+  async paginateTVByStatus({
+    userId,
+    page,
+    status,
+  }: {
+    userId: string;
+    page: number;
+    status: TodoStatusEnum;
+  }) {
     const limit = 20;
     const skip = limit * (page - 1);
     const query: PipelineStage[] = [
@@ -226,14 +264,29 @@ export class MediasService {
           $and: [
             { user_id: userId },
             { media_type: 'tv' },
-            { 'episode_watched.0': { $exists: true } },
-            // { $expr: { $eq: ['$count_watched', '$number_of_episodes'] } }, Watched
-            { $expr: { $lt: ['$count_watched', '$number_of_episodes'] } },
+            {
+              'episode_watched.0': {
+                $exists: status === 'watchlist' ? false : true,
+              },
+            },
+            status === 'watched'
+              ? {
+                  $expr: { $eq: ['$count_watched', '$number_of_episodes'] },
+                }
+              : {},
+            status === 'watching'
+              ? {
+                  $expr: { $lt: ['$count_watched', '$number_of_episodes'] },
+                }
+              : {},
           ],
         },
       },
       {
-        $sort: { 'episode_watched.watched_at': -1 },
+        $sort: {
+          'episode_watched.watched_at': -1,
+          watchlisted_at: -1,
+        },
       },
     ];
 
@@ -297,22 +350,9 @@ export class MediasService {
     });
   }
 
-  async getMediaByStatus(
-    media_type: string,
-    status: 'watchlist' | 'watched' | 'watching',
-  ) {
-    const findObj = {
-      media_type,
-      watchlist: status === 'watchlist' ? true : false,
-      watched: status === 'watched' ? true : false,
-    };
-    const medias = await this.mediaModel.find(findObj);
-    return medias;
-  }
-
   async update(
     id: string,
-    updateMediaDto: any,
+    updateMediaDto: Partial<Media>,
     mediaType: string,
     userId?: string,
   ) {
@@ -327,70 +367,6 @@ export class MediasService {
   async remove(id: string, mediaType: string) {
     await this.mediaModel.deleteOne({ id: id, media_type: mediaType });
     return;
-  }
-
-  @Cron('01 22 * * *')
-  async sendNotificationsToLine() {
-    try {
-      this.logger.warn('start line noti');
-      const respUser = await this.authService.findAll();
-      const users = respUser.data;
-      const findLineUsers = users.filter((val) => {
-        return val.identities.find((iden) => iden.provider === 'line');
-      });
-
-      for (const user of findLineUsers) {
-        const userIdentity = user.identities?.find(
-          (val) => val.provider === 'line',
-        );
-        this.lineService.pushMessage(userIdentity.user_id, {
-          type: 'text',
-          text: 'test',
-        });
-      }
-
-      return;
-    } catch (err) {
-      this.logger.error(err);
-    }
-  }
-  @Cron('29 13 * * *')
-  async test() {
-    const resp: Media[] = await this.mediaModel.find({
-      // user_id: userId,
-      media_type: 'tv',
-    });
-
-    for (const media of resp) {
-      const detail = await this.tmdbService.tvInfo(media.id);
-      await this.update(
-        media.id,
-        {
-          name: detail.name,
-          number_of_seasons: detail.number_of_seasons,
-          number_of_episodes: detail.number_of_episodes,
-        },
-        'tv',
-      );
-    }
-  }
-  @Cron('44 13 * * *')
-  async updateMovies() {
-    const resp: Media[] = await this.mediaModel.find({
-      // user_id: userId,
-      media_type: 'movie',
-    });
-
-    for (const media of resp) {
-      const detail = await this.tmdbService.movieInfo(media.id);
-      await this.update(
-        media.id,
-        {
-          name: detail.title,
-        },
-        'movie',
-      );
-    }
   }
 
   async getAllImdbRatings() {
@@ -422,70 +398,12 @@ export class MediasService {
     }
 
     const imdbDatas = JSON.parse(resp.ratings);
-    const findRating = imdbDatas.find((val: any) => val.id === imdbId);
+    const findRating = imdbDatas.find((val) => val.id === imdbId);
     if (!findRating) {
       return;
     }
 
     return findRating;
-  }
-
-  @Cron('40 19 * * *')
-  async updateIMDBDetail() {
-    try {
-      const res = await axios.get(
-        'https://datasets.imdbws.com/title.ratings.tsv.gz',
-        {
-          responseType: 'arraybuffer', // Important
-          headers: {
-            'Content-Type': 'application/gzip',
-          },
-        },
-      );
-
-      await this.imdbModel.deleteMany();
-
-      let datasRes: any;
-      // Calling gunzip method
-      await zlib.gunzip(res.data, async (err, buffer) => {
-        // console.log(buffer.toString('utf8'));
-        // fs.writeFileSync(tsvFileName, buffer);
-        const resJSON = tsvJSON(buffer.toString());
-        fs.writeFileSync('imdb.json', JSON.stringify(resJSON));
-
-        const datas = resJSON
-          .map((imdbData) => {
-            return {
-              id: imdbData.tconst,
-              rating: Number(imdbData.averageRating) || 0,
-              votes: Number(imdbData.numVotes) || 0,
-            };
-          })
-          .filter((val) => val.id && val.votes > 100 && val.rating > 2);
-
-        const sortDatas = orderBy(datas, 'id', 'asc');
-        const newa = chunk(sortDatas, 1000);
-
-        datasRes = resJSON;
-
-        await this.imdbModel.create(
-          newa.map((val) => {
-            return {
-              ratings: JSON.stringify(val),
-              ids: val.map((data) => data.id),
-              min_id: first(val).id,
-              max_id: last(val).id,
-            };
-          }),
-        );
-        console.log('end');
-        // await this.imdbModel.insertMany(datas);
-      });
-
-      return datasRes;
-    } catch (err) {
-      return err;
-    }
   }
 
   async updatetest() {

@@ -20,7 +20,6 @@ export class RatingController {
 
   @Get('/imdb')
   getAll() {
-    console.log('yes');
     return this.mediasService.getAllImdbRatings();
   }
 
@@ -32,10 +31,5 @@ export class RatingController {
   @Get('/imdb/:id')
   getImdbRating(@Param('id') id: string) {
     return this.mediasService.getImdbRating(id);
-  }
-
-  @Get('/update')
-  updateIMDBDetail() {
-    return this.mediasService.updateIMDBDetail();
   }
 }

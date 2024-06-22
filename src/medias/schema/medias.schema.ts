@@ -85,7 +85,6 @@ MediaSchema.set('toJSON', {
       }
     } else {
       if (ret.number_of_episodes === ret.episode_watched.length) {
-        console.log(ret);
         ret.account_status = 'watched';
       } else if (ret.episode_watched.length > 0) {
         ret.account_status = 'watching';

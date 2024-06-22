@@ -11,13 +11,7 @@ export class AuthService {
     clientId: process.env.AUTH0_CLIENT_ID,
     clientSecret: process.env.AUTH0_CLIENT_SECRET,
   });
-  constructor() {
-    this.management = new ManagementClient({
-      domain: process.env.AUTH0_DOMAIN1,
-      clientId: process.env.AUTH0_CLIENT_ID,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET,
-    });
-  }
+  constructor() {}
   create(_createAuthDto: CreateAuthDto) {
     return 'This action adds a new auth';
   }
@@ -27,11 +21,6 @@ export class AuthService {
   }
 
   async findByLineId(lineId: string) {
-    this.management = new ManagementClient({
-      domain: process.env.AUTH0_DOMAIN1,
-      clientId: process.env.AUTH0_CLIENT_ID,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET,
-    });
     const resp = await this.management.users.getAll({
       // q: `identities.provider:line`,
       q: `identities.user_id:${lineId}`,
@@ -41,16 +30,7 @@ export class AuthService {
   }
 
   findOne(id: string) {
-    this.management = new ManagementClient({
-      domain: process.env.AUTH0_DOMAIN1,
-      clientId: process.env.AUTH0_CLIENT_ID,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET,
-    });
-    try {
-      return this.management.users.get({ id: id });
-    } catch (err) {
-      console.log('error');
-    }
+    return this.management.users.get({ id: id });
   }
 
   update(id: number, _updateAuthDto: UpdateAuthDto) {

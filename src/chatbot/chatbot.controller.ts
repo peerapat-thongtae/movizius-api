@@ -29,7 +29,6 @@ export class ChatbotController {
     const intentMap = new Map();
 
     const originalReq: any = agent.originalRequest;
-    // console.log(typeof agent.requestSource);
     const welcome = async () => {
       if (param.media_type) {
         const lineId: string = originalReq.payload.data?.source?.userId;

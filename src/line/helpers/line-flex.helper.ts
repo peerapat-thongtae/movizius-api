@@ -1,16 +1,30 @@
-import { FlexBubble, FlexCarousel } from '@line/bot-sdk';
+import { FlexBubble, FlexCarousel, FlexMessage } from '@line/bot-sdk';
+import { MovieResponse, ShowResponse } from 'moviedb-promise';
+import { MediaTypeEnum } from 'src/medias/enum/media-type.enum';
 
-export const movieDetailFlex = (movie: any): any => {
+export const movieDetailFlex = (
+  movie: MovieResponse & ShowResponse,
+  media_type: MediaTypeEnum,
+): FlexMessage => {
   return {
     altText: movie.title,
     type: 'flex',
-    contents: movieDetailCardLine(movie),
+    contents: movieDetailCardLine({
+      id: movie.id,
+      mediaType: media_type,
+      poster_path: movie.poster_path,
+      name: movie.name || movie.title,
+      release_date: movie.release_date || movie.first_air_date,
+      vote_average: movie.vote_average,
+      vote_count: movie.vote_count,
+      streamingName: '',
+    }),
   };
 };
 
 export type IMovieLineCard = {
   id: string | number;
-  mediaType: string;
+  mediaType: MediaTypeEnum;
   poster_path: string;
   name: string;
   release_date: string;

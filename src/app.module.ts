@@ -8,6 +8,8 @@ import { LineModule } from './line/line.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { MongoModule } from './databases/mongo.module';
+import { PostgresModule } from 'src/databases/postgres.module';
 
 @Module({
   imports: [
@@ -16,15 +18,8 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     MediasModule,
     LineModule,
     ScheduleModule.forRoot(),
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          uri: configService.get<string>('MONGO_URI'),
-        };
-      },
-    }),
+    MongoModule,
+    PostgresModule,
     ChatbotModule,
   ],
   controllers: [AppController],

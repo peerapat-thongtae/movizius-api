@@ -1,3 +1,17 @@
+import { TodoStatusEnum } from 'src/medias/enum/todo-status.enum';
+
 export class CreateMediaDto {
-  status: string;
+  id: string;
+  status: TodoStatusEnum;
+  name?: string;
+}
+
+export class UpdateTVEpisodeDto {
+  id: string;
+  episode_watched: {
+    episode_id?: number;
+    season_number: number;
+    episode_number: number;
+    watched_at: Date;
+  }[];
 }

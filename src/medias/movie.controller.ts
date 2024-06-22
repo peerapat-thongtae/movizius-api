@@ -13,6 +13,7 @@ import { MediasService } from './medias.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { TodoStatusEnum } from 'src/medias/enum/todo-status.enum';
 
 @Controller('movie')
 @UseGuards(AuthGuard('jwt'))
@@ -35,10 +36,9 @@ export class MovieController {
   }
 
   @Get('paginate/:status')
-  paginate(@Param('status') status: string, @Req() req) {
-    return this.mediasService.paginateByStatus(
+  paginate(@Param('status') status: TodoStatusEnum, @Req() req) {
+    return this.mediasService.paginateMovieByStatus(
       req?.user?.sub,
-      this.mediaType,
       status,
       Number(req.query?.page),
     );
@@ -51,7 +51,6 @@ export class MovieController {
 
   @Get(':id')
   findOne(@Param('id') id: string, @Req() req) {
-    console.log('user', req?.user);
     return this.mediasService.findOne(id, req?.user?.sub, this.mediaType);
   }
 

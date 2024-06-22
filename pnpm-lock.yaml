@@ -86,6 +86,9 @@ dependencies:
   dialogflow-fulfillment:
     specifier: ^0.6.1
     version: 0.6.1(actions-on-google@2.14.0)
+  dotenv:
+    specifier: ^16.4.5
+    version: 16.4.5
   express-oauth2-jwt-bearer:
     specifier: ^1.6.0
     version: 1.6.0

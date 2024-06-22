@@ -1,0 +1,29 @@
+{
+  "typescript.preferences.importModuleSpecifier": "non-relative", // suggest import as alias
+  "editor.tabSize": 2,
+  "typescript.tsc.autoDetect": "off",
+  "terminal.integrated.scrollback": 100000,
+  "terminal.integrated.fontFamily": "monospace",
+  "prettier.enable": false,
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.sortJSON": "explicit"
+  },
+  "sortJSON.contextMenu": {
+    "sortJSON": true,
+  },
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "css.validate": false,
+  "i18n-ally.localesPaths": [
+    "src/locales"
+  ],
+  "i18n-ally.sourceLanguage": "th",
+  "i18n-ally.keystyle": "nested",
+  "editor.wordWrap": "off",
+  
+    "vue.codeActions.enabled": false,
+    "typescript.tsdk": "node_modules/typescript/lib",
+}

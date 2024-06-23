@@ -50,12 +50,14 @@ export class Media {
     type: Date,
     default: new Date(),
     required: false,
+    index: true,
   })
   watchlisted_at: Date;
 
   @Prop({
     type: Date,
     required: false,
+    index: true,
   })
   watched_at: Date;
 

@@ -286,6 +286,7 @@ export class MediasService {
         $sort: {
           'episode_watched.watched_at': -1,
           watchlisted_at: -1,
+          id: 1,
         },
       },
     ];
@@ -298,7 +299,7 @@ export class MediasService {
         $limit: limit,
       },
     ];
-
+    //
     const totalQuery = await this.mediaModel.aggregate(query);
     const filter: Media[] = await this.mediaModel.aggregate([
       ...query,

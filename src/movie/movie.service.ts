@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,13 +11,21 @@ import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { TMDBService } from '../medias/tmdb.service';
 import {
   catchError,
+  flatMap,
   forkJoin,
+  from,
   lastValueFrom,
   map,
+  mapTo,
+  mergeMap,
   of,
   switchMap,
   tap,
 } from 'rxjs';
+import { MediasService } from '../medias/medias.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Imdb, ImdbDocument } from '../medias/schema/imdb.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class MovieService {
@@ -28,10 +36,32 @@ export class MovieService {
     @InjectRepository(MovieUser)
     private movieUserRepository: Repository<MovieUser>,
 
+    @InjectModel(Imdb.name) private imdbModel: Model<ImdbDocument>,
+
     private tmdbService: TMDBService,
+
+    @Inject(forwardRef(() => MediasService))
+    private mediaService: MediasService,
   ) {}
   create(createMovieDto: CreateMovieDto) {
     return 'This action adds a new movie';
+  }
+
+  async getMovieInfo(movieId: number) {
+    const movieInfo = await lastValueFrom(
+      from(this.tmdbService.movieInfo(movieId)).pipe(
+        // Get Rating
+        map(async (val) => {
+          const imdbData = await this.mediaService.getImdbRating(val.imdb_id);
+          return {
+            ...val,
+            vote_average: imdbData?.rating || val.vote_average,
+            vote_count: imdbData?.votes || val.vote_count,
+          };
+        }),
+      ),
+    );
+    return movieInfo;
   }
 
   async findAll(payload: FilterMovieRequest & { user_id: string }) {
@@ -73,27 +103,27 @@ export class MovieService {
 
     const movieUserDatas = await qb.getRawMany();
 
-    const results = [];
-
-    const tmdbDatas =
+    const results =
       movieUserDatas.length > 0
         ? await lastValueFrom(
             forkJoin(
-              movieUserDatas.map((val) => this.tmdbService.movieInfo(val.id)),
+              movieUserDatas.map((val) => {
+                return this.getMovieInfo(val.id);
+              }),
             ).pipe(
               catchError(() => []),
-              map((val) => {
-                return mapValues(keyBy(val, 'id'));
+              map((tmdbs) => {
+                return tmdbs.map((val, idx) => {
+                  return {
+                    account_state: movieUserDatas[idx],
+                    ...val,
+                  };
+                });
               }),
             ),
           )
         : [];
 
-    for (const data of movieUserDatas) {
-      // const tmdbData = await this.tmdbService.movieInfo(data.id);
-      results.push({ account_state: data, ...tmdbDatas?.[data.id] });
-      // results.push({ ...data });
-    }
     return {
       total_pages: ceil(total_results / limit),
       total_results,

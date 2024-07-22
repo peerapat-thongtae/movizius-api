@@ -44,8 +44,43 @@ export class MovieService {
     @Inject(forwardRef(() => RatingService))
     private ratingService: RatingService,
   ) {}
-  create(createMovieDto: CreateMovieDto) {
-    return 'This action adds a new movie';
+
+  async updateMovieStatus(
+    createMovieDto: CreateMovieDto & { user_id: string },
+  ) {
+    const foundMovie = await this.findOne({
+      id: createMovieDto.id,
+      user_id: createMovieDto.user_id,
+    });
+    if (foundMovie) {
+      if (createMovieDto.status === TodoStatusEnum.WATCHED) {
+        return await this.movieUserRepository.update(
+          { id: foundMovie.account_state_id },
+          { watched_at: new Date() },
+        );
+      }
+
+      if (createMovieDto.status === TodoStatusEnum.WATCHLIST) {
+        await this.movieUserRepository.update(
+          { id: foundMovie.account_state_id },
+          { watched_at: null, watchlisted_at: new Date() },
+        );
+        return 1;
+      }
+    } else {
+      await this.movieRepository.insert({
+        id: createMovieDto.id,
+      });
+      await this.movieUserRepository.insert({
+        user_id: createMovieDto.user_id,
+        movie: { id: createMovieDto.id },
+        watchlisted_at: new Date(),
+        watched_at:
+          createMovieDto.status === TodoStatusEnum.WATCHED ? new Date() : null,
+      });
+      return 1;
+    }
+    return 0;
   }
 
   async getMovieInfo(movieId: number) {
@@ -65,11 +100,49 @@ export class MovieService {
     return movieInfo;
   }
 
+  async findOne(payload: { id: number; user_id?: string }) {
+    const qb = this.movieRepository.createQueryBuilder('movie');
+    qb.leftJoin('movie.users', 'movie_user');
+    qb.select([
+      'movie.id as id',
+      'movie_user.id as account_state_id',
+      'movie_user.watchlisted_at as watchlisted_at',
+      'movie_user.watched_at as watched_at',
+    ]);
+    qb.andWhere('movie.id = :id', { id: payload.id });
+
+    if (payload.user_id) {
+      qb.andWhere(`movie_user.user_id = '${payload.user_id}'`);
+    }
+
+    qb.addSelect(
+      `CASE 
+        WHEN watchlisted_at is not null and watched_at is null THEN 'watchlist' 
+        WHEN watched_at is not null THEN 'watched' 
+        ELSE ''
+        END as status`,
+    );
+
+    const model = await qb.getRawOne();
+    if (!model) {
+      return null;
+    }
+
+    return model;
+
+    // const tmdb = await this.getMovieInfo(payload.id);
+    // return {
+    //   account_state: model,
+    //   ...tmdb,
+    // };
+  }
+
   async findAll(payload: FilterMovieRequest & { user_id: string }) {
     const qb = this.movieRepository.createQueryBuilder('movie');
     qb.leftJoin('movie.users', 'movie_user');
     qb.select([
       'movie.id as id',
+      'movie_user.id as account_state_id',
       'movie_user.watchlisted_at as watchlisted_at',
       'movie_user.watched_at as watched_at',
     ]);
@@ -87,13 +160,20 @@ export class MovieService {
 
     if (payload.status === TodoStatusEnum.WATCHED) {
       qb.andWhere('watched_at is not null');
+      qb.orderBy('movie_user.watched_at', 'DESC').addOrderBy(
+        'movie.id',
+        'DESC',
+      );
     }
 
     if (payload.status === TodoStatusEnum.WATCHLIST) {
       qb.andWhere('watched_at is null and watchlisted_at is not null');
+      qb.orderBy('movie_user.watchlisted_at', 'DESC').addOrderBy(
+        'movie.id',
+        'DESC',
+      );
     }
 
-    qb.orderBy('movie_user.watched_at', 'DESC').addOrderBy('movie.id', 'DESC');
     const total_results = await qb.getCount();
 
     // Pagination
@@ -130,10 +210,6 @@ export class MovieService {
       total_results,
       results: results,
     };
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} movie`;
   }
 
   update(id: number, updateMovieDto: UpdateMovieDto) {

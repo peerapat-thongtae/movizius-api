@@ -28,7 +28,8 @@ export class RatingService {
   async findByImdbId(imdb_id: string) {
     const qb = this.ratingRepository.createQueryBuilder('rating');
 
-    qb.where('rating.max_id >= :id', { id: imdb_id });
+    // qb.where('rating.max_id >= :id', { id: imdb_id });
+    qb.where(`:id = ANY(rating.ids)`, { id: imdb_id });
     qb.limit(1);
     qb.select('rating.ratings as rating');
     const res = await qb.getRawOne();
@@ -74,12 +75,13 @@ export class RatingService {
           );
 
         const sortDatas = orderBy(datas, 'imdb_id', 'asc');
-        const chunkDatas = chunk(sortDatas, 400);
+        const chunkDatas = chunk(sortDatas, 1000);
         // console.log(sortDatas);
         await this.deleteAll();
 
         const ratings = chunkDatas.map((val) => {
           return this.ratingRepository.create({
+            ids: val.map((data) => data.imdb_id),
             max_id: last(val).imdb_id,
             ratings: val,
           });

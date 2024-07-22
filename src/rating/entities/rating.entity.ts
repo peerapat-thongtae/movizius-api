@@ -17,6 +17,9 @@ export class Rating {
   @Index()
   max_id: string;
 
+  @Column({ type: 'text', array: true, default: [] })
+  ids: string[];
+
   @Column({ type: 'jsonb' })
   ratings: { imdb_id: string; vote_average: number; vote_count: number }[]; //
 

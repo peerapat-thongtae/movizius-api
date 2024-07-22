@@ -8,6 +8,8 @@ import {
   Delete,
   Req,
   UseGuards,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { MovieService } from './movie.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
@@ -17,12 +19,16 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Controller('v2/movie')
 @UseGuards(AuthGuard('jwt'))
+@UsePipes(new ValidationPipe({ transform: true }))
 export class MovieController {
   constructor(private readonly movieService: MovieService) {}
 
   @Post()
-  create(@Body() createMovieDto: CreateMovieDto) {
-    return this.movieService.create(createMovieDto);
+  updateMovieStatus(@Req() req: any, @Body() createMovieDto: CreateMovieDto) {
+    return this.movieService.updateMovieStatus({
+      ...createMovieDto,
+      user_id: req?.user?.sub,
+    });
   }
 
   @Get('paginate/:status')
@@ -35,8 +41,8 @@ export class MovieController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.movieService.findOne(+id);
+  findOne(@Param('id') id: number) {
+    return this.movieService.findOne({ id });
   }
 
   @Patch(':id')

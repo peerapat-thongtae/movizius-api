@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Movie } from '../movie/entities/movie.entity';
 import { MovieUser } from '../movie/entities/movie_user.entity';
+import { Rating } from '../rating/entities/rating.entity';
 // import { getMetadataArgsStorage } from 'typeorm';
 
 @Module({
@@ -18,7 +19,7 @@ import { MovieUser } from '../movie/entities/movie_user.entity';
           username: configService.get('POSTGRES_USER'),
           password: configService.get('POSTGRES_PASSWORD'),
           database: configService.get('POSTGRES_DB'),
-          entities: [Movie, MovieUser],
+          entities: [Movie, MovieUser, Rating],
           synchronize: true,
           logging: true,
           ssl: true,

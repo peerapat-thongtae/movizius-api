@@ -26,6 +26,7 @@ import { MediasService } from '../medias/medias.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Imdb, ImdbDocument } from '../medias/schema/imdb.schema';
 import { Model } from 'mongoose';
+import { RatingService } from '../rating/rating.service';
 
 @Injectable()
 export class MovieService {
@@ -40,8 +41,8 @@ export class MovieService {
 
     private tmdbService: TMDBService,
 
-    @Inject(forwardRef(() => MediasService))
-    private mediaService: MediasService,
+    @Inject(forwardRef(() => RatingService))
+    private ratingService: RatingService,
   ) {}
   create(createMovieDto: CreateMovieDto) {
     return 'This action adds a new movie';
@@ -52,11 +53,11 @@ export class MovieService {
       from(this.tmdbService.movieInfo(movieId)).pipe(
         // Get Rating
         map(async (val) => {
-          const imdbData = await this.mediaService.getImdbRating(val.imdb_id);
+          const imdbData = await this.ratingService.findByImdbId(val.imdb_id);
           return {
             ...val,
-            vote_average: imdbData?.rating || val.vote_average,
-            vote_count: imdbData?.votes || val.vote_count,
+            vote_average: imdbData?.vote_average || val.vote_average,
+            vote_count: imdbData?.vote_count || val.vote_count,
           };
         }),
       ),

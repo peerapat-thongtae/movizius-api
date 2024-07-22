@@ -9,6 +9,7 @@ import { MediasService } from '../medias/medias.service';
 import { MediasModule } from '../medias/medias.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Imdb, ImdbSchema } from '../medias/schema/imdb.schema';
+import { RatingModule } from '../rating/rating.module';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { Imdb, ImdbSchema } from '../medias/schema/imdb.schema';
         collection: 'imdb',
       },
     ]),
-    MediasModule,
+    RatingModule,
   ],
   controllers: [MovieController],
   providers: [MovieService, TMDBService],

@@ -11,7 +11,6 @@ import { MovieUser } from '../movie/entities/movie_user.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
-        console.log(configService.get('POSTGRES_HOST'));
         return {
           type: 'postgres',
           host: configService.get('POSTGRES_HOST'),

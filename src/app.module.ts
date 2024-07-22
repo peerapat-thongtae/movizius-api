@@ -10,6 +10,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { MongoModule } from './databases/mongo.module';
 import { PostgresModule } from './databases/postgres.module';
+import { MovieModule } from './movie/movie.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PostgresModule } from './databases/postgres.module';
     MongoModule,
     PostgresModule,
     ChatbotModule,
+    MovieModule,
   ],
   controllers: [AppController],
   providers: [AppService],

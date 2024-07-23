@@ -198,9 +198,11 @@ export class MovieService {
             ).pipe(
               catchError(() => []),
               map(async (tmdbs) => {
-                const imdbs = await this.ratingService.findByImdbIds(
-                  tmdbs.map((val) => val.imdb_id),
-                );
+                const imdbs = payload.with_imdb_rating
+                  ? await this.ratingService.findByImdbIds(
+                      tmdbs.map((val) => val.imdb_id),
+                    )
+                  : [];
                 return tmdbs.map((val) => {
                   const findAccountState = movieUserDatas.find(
                     (state) => state.id === val.id,

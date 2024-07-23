@@ -10,6 +10,10 @@ export class FilterMovieRequest {
 
   @IsOptional()
   @IsBoolean()
+  with_imdb_rating: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   no_detail: boolean;
 
   @IsEnum(TodoStatusEnum)

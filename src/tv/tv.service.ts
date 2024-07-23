@@ -28,15 +28,22 @@ export class TvService {
 
   async getTVInfo(movieId: number) {
     const movieInfo = await lastValueFrom(
-      from(this.tmdbService.tvInfo(movieId)).pipe(
+      from(
+        this.tmdbService.tvInfo({
+          id: movieId,
+          append_to_response: 'external_ids',
+        }),
+      ).pipe(
         // Get Rating
         map(async (val) => {
           // const imdbData = await this.ratingService.findByImdbId(val.imdb_id);
           const imdbData: any = {};
+          const externalIds: any = (val as any).external_ids;
           return {
             ...val,
             vote_average: imdbData?.vote_average || val.vote_average,
             vote_count: imdbData?.vote_count || val.vote_count,
+            imdb_id: externalIds?.imdb_id || '',
           };
         }),
       ),

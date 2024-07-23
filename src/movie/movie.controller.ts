@@ -10,12 +10,14 @@ import {
   UseGuards,
   ValidationPipe,
   UsePipes,
+  Query,
 } from '@nestjs/common';
 import { MovieService } from './movie.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { AuthGuard } from '@nestjs/passport';
+import { FilterMovieRequest } from '../movie/dto/filter-movie.dto';
 
 @Controller('v2/movie')
 @UseGuards(AuthGuard('jwt'))
@@ -32,9 +34,13 @@ export class MovieController {
   }
 
   @Get('paginate/:status')
-  paginate(@Param('status') status: TodoStatusEnum, @Req() req) {
+  paginate(
+    @Param('status') status: TodoStatusEnum,
+    @Query() query: FilterMovieRequest,
+    @Req() req: any,
+  ) {
     return this.movieService.findAll({
-      page: req.query?.page,
+      ...query,
       user_id: req?.user?.sub,
       status,
     });

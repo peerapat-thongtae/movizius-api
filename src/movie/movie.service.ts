@@ -88,7 +88,8 @@ export class MovieService {
       from(this.tmdbService.movieInfo(movieId)).pipe(
         // Get Rating
         map(async (val) => {
-          const imdbData = await this.ratingService.findByImdbId(val.imdb_id);
+          // const imdbData = await this.ratingService.findByImdbId(val.imdb_id);
+          const imdbData: any = {};
           return {
             ...val,
             vote_average: imdbData?.vote_average || val.vote_average,

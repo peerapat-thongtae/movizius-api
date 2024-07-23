@@ -179,11 +179,14 @@ export class MovieService {
 
     // Pagination
     const page = payload.page || 1;
-    const limit = 20;
+    const limit = payload?.limit || 20;
     const skip = limit * (page - 1);
     qb.limit(limit).offset(skip);
 
     const movieUserDatas = await qb.getRawMany();
+    if (payload.no_detail) {
+      return movieUserDatas;
+    }
 
     const results =
       movieUserDatas.length > 0

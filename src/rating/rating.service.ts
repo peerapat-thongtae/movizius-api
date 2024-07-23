@@ -25,6 +25,22 @@ export class RatingService {
     return this.ratingRepository.find();
   }
 
+  async findByImdbIds(imdb_ids: string[]) {
+    const qb = this.ratingRepository.createQueryBuilder('rating');
+
+    qb.where(':imdb_ids && rating.ids', { imdb_ids });
+    qb.select('rating.ratings as ratings');
+    const res = await qb.getRawMany();
+    const ratings = [];
+    for (const imdbData of res) {
+      const filterImdb = imdbData.ratings.filter((val) =>
+        imdb_ids.includes(val.imdb_id),
+      );
+      ratings.push(...filterImdb);
+    }
+    return ratings;
+  }
+
   async findByImdbId(imdb_id: string) {
     const qb = this.ratingRepository.createQueryBuilder('rating');
 

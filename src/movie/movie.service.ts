@@ -194,11 +194,20 @@ export class MovieService {
               }),
             ).pipe(
               catchError(() => []),
-              map((tmdbs) => {
+              map(async (tmdbs) => {
+                const imdbs = await this.ratingService.findByImdbIds(
+                  tmdbs.map((val) => val.imdb_id),
+                );
                 return tmdbs.map((val, idx) => {
                   return {
                     account_state: movieUserDatas[idx],
                     ...val,
+                    vote_average:
+                      imdbs.find((imdb) => imdb.imdb_id === val.imdb_id)
+                        ?.vote_average || val.vote_average,
+                    vote_count:
+                      imdbs.find((imdb) => imdb.imdb_id === val.imdb_id)
+                        ?.vote_count || val.vote_count,
                   };
                 });
               }),

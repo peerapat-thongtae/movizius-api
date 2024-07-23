@@ -172,6 +172,7 @@ export class TvService {
         : [];
     return {
       total_results: total_results,
+      total_pages: ceil(total_results / limit),
       results: results,
     };
   }

@@ -9,23 +9,7 @@ import { MovieUser } from './entities/movie_user.entity';
 import { FilterMovieRequest } from './dto/filter-movie.dto';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { TMDBService } from '../medias/tmdb.service';
-import {
-  catchError,
-  flatMap,
-  forkJoin,
-  from,
-  lastValueFrom,
-  map,
-  mapTo,
-  mergeMap,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
-import { MediasService } from '../medias/medias.service';
-import { InjectModel } from '@nestjs/mongoose';
-import { Imdb, ImdbDocument } from '../medias/schema/imdb.schema';
-import { Model } from 'mongoose';
+import { catchError, forkJoin, from, lastValueFrom, map } from 'rxjs';
 import { RatingService } from '../rating/rating.service';
 
 @Injectable()
@@ -36,8 +20,6 @@ export class MovieService {
 
     @InjectRepository(MovieUser)
     private movieUserRepository: Repository<MovieUser>,
-
-    @InjectModel(Imdb.name) private imdbModel: Model<ImdbDocument>,
 
     private tmdbService: TMDBService,
 
@@ -152,7 +134,7 @@ export class MovieService {
         WHEN watchlisted_at is not null and watched_at is null THEN 'watchlist' 
         WHEN watched_at is not null THEN 'watched' 
         ELSE ''
-        END as status`,
+        END as account_status`,
     );
 
     if (payload.user_id) {
@@ -209,7 +191,7 @@ export class MovieService {
                   );
                   return {
                     account_state: findAccountState || null,
-                    account_status: findAccountState?.status || '',
+                    account_status: findAccountState?.account_status || '',
                     ...val,
                     vote_average:
                       imdbs.find((imdb) => imdb.imdb_id === val.imdb_id)

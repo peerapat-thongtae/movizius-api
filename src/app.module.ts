@@ -12,6 +12,7 @@ import { MongoModule } from './databases/mongo.module';
 import { PostgresModule } from './databases/postgres.module';
 import { MovieModule } from './movie/movie.module';
 import { RatingModule } from './rating/rating.module';
+import { TvModule } from './tv/tv.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RatingModule } from './rating/rating.module';
     ChatbotModule,
     MovieModule,
     RatingModule,
+    TvModule,
   ],
   controllers: [AppController],
   providers: [AppService],

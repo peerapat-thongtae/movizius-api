@@ -12,17 +12,7 @@ import { Imdb, ImdbSchema } from '../medias/schema/imdb.schema';
 import { RatingModule } from '../rating/rating.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Movie, MovieUser]),
-    MongooseModule.forFeature([
-      {
-        name: Imdb.name,
-        schema: ImdbSchema,
-        collection: 'imdb',
-      },
-    ]),
-    RatingModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Movie, MovieUser]), RatingModule],
   controllers: [MovieController],
   providers: [MovieService, TMDBService],
 })

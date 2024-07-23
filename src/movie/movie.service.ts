@@ -201,9 +201,13 @@ export class MovieService {
                 // const imdbs = await this.ratingService.findByImdbIds(
                 //   tmdbs.map((val) => val.imdb_id),
                 // );
-                return tmdbs.map((val, idx) => {
+                return tmdbs.map((val) => {
+                  const findAccountState = movieUserDatas.find(
+                    (state) => state.id === val.id,
+                  );
                   return {
-                    account_state: movieUserDatas[idx],
+                    account_state: findAccountState || null,
+                    account_status: findAccountState?.status || '',
                     ...val,
                     // vote_average:
                     //   imdbs.find((imdb) => imdb.imdb_id === val.imdb_id)

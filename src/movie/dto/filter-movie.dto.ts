@@ -4,8 +4,8 @@ export class FilterMovieRequest {
   @IsNumber()
   page: number;
 
-  @IsNumber()
   @IsOptional()
+  @IsNumber()
   limit?: number;
 
   @IsOptional()

@@ -34,13 +34,9 @@ export class MovieController {
   }
 
   @Get('paginate/:status')
-  paginate(
-    @Param('status') status: TodoStatusEnum,
-    @Query() query: FilterMovieRequest,
-    @Req() req: any,
-  ) {
+  paginate(@Param('status') status: TodoStatusEnum, @Req() req: any) {
     return this.movieService.findAll({
-      ...query,
+      ...req.query,
       user_id: req?.user?.sub,
       status,
     });

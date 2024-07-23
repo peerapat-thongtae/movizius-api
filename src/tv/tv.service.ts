@@ -77,39 +77,53 @@ export class TvService {
           WHEN jsonb_array_length(tv_user.episode_watched) = 0 THEN 'watchlist'
           ELSE '' END as account_status
       `,
+      'sqb.latest_watched as latest_watched',
     ]);
 
-    qb.addSelect((subQuery) => {
-      return subQuery
-        .select(["MAX((elem->>'watched_at')::timestamptz) as latest_watched"])
-        .from((qb) => {
-          return qb
-            .select('jsonb_array_elements(myTable.episode_watched) AS elem')
-            .where('tv_user.id = myTable.id')
-            .from('tv_user', 'myTable');
-        }, 'subquery');
-    });
+    const subQuery = this.tvUserRepository
+      .createQueryBuilder('subTvUser')
+      .select('subTvUser.id', 'id')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select(["MAX((elem->>'watched_at')::timestamptz) as latest_watched"])
+          .from((subQb) => {
+            return subQb
+              .select('jsonb_array_elements(myTable.episode_watched) AS elem')
+              .where('subTvUser.id = myTable.id')
+              .from('tv_user', 'myTable');
+          }, 'subQueryLatestWatched');
+      })
+      .groupBy('subTvUser.id')
+      .getQuery();
+
+    qb.leftJoin(`(${subQuery})`, 'sqb', 'sqb.id = tv_user.id');
 
     if (payload.status === TodoStatusEnum.WATCHLIST) {
       qb.andWhere('jsonb_array_length(tv_user.episode_watched) = 0');
+      qb.orderBy('tv_user.watchlisted_at', 'DESC');
     }
 
     if (payload.status === TodoStatusEnum.WATCHING) {
       qb.andWhere(
         'jsonb_array_length(tv_user.episode_watched) > 0 and jsonb_array_length(tv_user.episode_watched) < tv.number_of_episodes',
       );
+      qb.orderBy(`sqb.latest_watched`, 'DESC');
     }
 
     if (payload.status === TodoStatusEnum.WATCHED) {
       qb.andWhere(
         'jsonb_array_length(tv_user.episode_watched) = tv.number_of_episodes',
       );
+      qb.orderBy(`sqb.latest_watched`, 'DESC');
+      // qb.orderBy('subQueryLatestWatched', 'DESC');
     }
+
+    qb.addOrderBy('tv.id', 'DESC');
 
     if (payload.user_id) {
       qb.andWhere('tv_user.user_id = :user_id', { user_id: payload.user_id });
     }
-    qb.groupBy('tv.id, tv_user.id');
+    qb.groupBy('tv.id, tv_user.id, sqb.id, sqb.latest_watched');
 
     const total_results = await qb.clone().getCount();
 

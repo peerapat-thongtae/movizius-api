@@ -6,10 +6,11 @@ import { TV } from '../tv/entities/tv.entity';
 import { TVUser } from '../tv/entities/tv_user.entity';
 import { RatingModule } from '../rating/rating.module';
 import { TMDBService } from '../medias/tmdb.service';
+import { TVQueryBuilder } from '../tv/tv.query';
 
 @Module({
   imports: [TypeOrmModule.forFeature([TV, TVUser]), RatingModule],
   controllers: [TvController],
-  providers: [TvService, TMDBService],
+  providers: [TvService, TMDBService, TVQueryBuilder],
 })
 export class TvModule {}

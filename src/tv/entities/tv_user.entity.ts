@@ -38,11 +38,11 @@ export class TVUser {
 
   @Column({ type: 'jsonb', array: false, default: () => "'[]'" })
   episode_watched: {
-    episode_id: number;
+    episode_id?: number;
     episode_number: number;
     season_number: number;
     watched_at: Date | null;
-  };
+  }[];
 
   @CreateDateColumn()
   created_at: Date;

@@ -11,7 +11,7 @@ export default class LineController {
     try {
       this.lineService.handleEvents(body.events);
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
   }
 }

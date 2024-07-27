@@ -197,6 +197,7 @@ export class MediasService {
     });
 
     return {
+      page: 1,
       results: resp,
       total_results: resp.length,
       total_pages: 1,
@@ -235,6 +236,7 @@ export class MediasService {
     );
 
     return {
+      page: page,
       results: resp,
       total_results: total.length,
       total_pages: total.length / 20,
@@ -307,6 +309,7 @@ export class MediasService {
     ]);
 
     return {
+      page,
       results: filter,
       total_results: totalQuery.length,
       total_pages: ceil(totalQuery.length / limit),

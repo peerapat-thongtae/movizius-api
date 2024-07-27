@@ -13,6 +13,7 @@ import { Imdb, ImdbSchema } from './schema/imdb.schema';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import { AnimeController } from './anime.controller';
 import { MediaCronService } from '../medias/media-cron.service';
+import { RatingModule } from '../rating/rating.module';
 
 @Module({
   controllers: [
@@ -39,6 +40,7 @@ import { MediaCronService } from '../medias/media-cron.service';
         collection: 'imdb',
       },
     ]),
+    RatingModule,
   ],
   providers: [MediasService, TMDBService, AuthService, MediaCronService],
   exports: [MediasService, TMDBService, AuthService, MediaCronService],

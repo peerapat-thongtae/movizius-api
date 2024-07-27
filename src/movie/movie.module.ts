@@ -10,10 +10,11 @@ import { MediasModule } from '../medias/medias.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Imdb, ImdbSchema } from '../medias/schema/imdb.schema';
 import { RatingModule } from '../rating/rating.module';
+import { MovieQueryBuilder } from '../movie/movie.query';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Movie, MovieUser]), RatingModule],
   controllers: [MovieController],
-  providers: [MovieService, TMDBService],
+  providers: [MovieService, MovieQueryBuilder, TMDBService],
 })
 export class MovieModule {}

@@ -21,7 +21,7 @@ import { Rating } from '../rating/entities/rating.entity';
           database: configService.get('POSTGRES_DB'),
           entities: [Movie, MovieUser, Rating],
           synchronize: true,
-          logging: true,
+          logging: false,
           ssl: true,
           autoLoadEntities: true,
         };

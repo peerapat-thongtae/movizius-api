@@ -2,7 +2,8 @@ import { TodoStatusEnum } from '../../medias/enum/todo-status.enum';
 import { IsBoolean, IsEnum, IsNumber, IsOptional } from 'class-validator';
 export class FilterMovieRequest {
   @IsNumber()
-  page: number;
+  @IsOptional()
+  page?: number;
 
   @IsOptional()
   @IsNumber()
@@ -10,14 +11,15 @@ export class FilterMovieRequest {
 
   @IsOptional()
   @IsBoolean()
-  with_imdb_rating: boolean;
+  with_imdb_rating?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  no_detail: boolean;
+  no_detail?: boolean;
 
   @IsEnum(TodoStatusEnum)
-  status: TodoStatusEnum;
+  @IsOptional()
+  status?: TodoStatusEnum;
 
   sort?: any;
 }

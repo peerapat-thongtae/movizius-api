@@ -18,6 +18,7 @@ import {
 } from '../movie/types/Movie.type';
 import { DiscoverMovieRequest, MovieResponse } from 'moviedb-promise';
 import { MovieQueryBuilder } from '../movie/movie.query';
+import { MediasService } from '../medias/medias.service';
 
 @Injectable()
 export class MovieService {
@@ -31,11 +32,31 @@ export class MovieService {
     @Inject(MovieQueryBuilder)
     private movieQueryBuilder: MovieQueryBuilder,
 
+    private mediaService: MediasService,
     private tmdbService: TMDBService,
 
     @Inject(forwardRef(() => RatingService))
     private ratingService: RatingService,
   ) {}
+
+  async createOrGet(id: number) {
+    const tmdb = await this.mediaService.getMovieInfo(id);
+    await this.movieRepository.upsert(
+      {
+        id: tmdb.id,
+        release_date: tmdb.release_date,
+        title: tmdb.title,
+        is_anime:
+          tmdb.original_language === 'ja' &&
+          tmdb.genres.find((genre) => genre.id === 16)
+            ? true
+            : false,
+      },
+      ['id'],
+    );
+
+    return this.findOne({ id });
+  }
 
   async updateMovieStatus(
     createMovieDto: CreateMovieDto & { user_id: string },
@@ -46,23 +67,21 @@ export class MovieService {
     });
     if (foundMovie) {
       if (createMovieDto.status === TodoStatusEnum.WATCHED) {
-        return await this.movieUserRepository.update(
+        await this.movieUserRepository.update(
           { id: foundMovie?.account_state?.account_state_id },
           { watched_at: new Date() },
         );
       }
 
       if (createMovieDto.status === TodoStatusEnum.WATCHLIST) {
-        await this.movieUserRepository.update(
+        this.movieUserRepository.update(
           { id: foundMovie?.account_state?.account_state_id },
           { watched_at: null, watchlisted_at: new Date() },
         );
         return 1;
       }
     } else {
-      await this.movieRepository.insert({
-        id: createMovieDto.id,
-      });
+      await this.createOrGet(createMovieDto.id);
       await this.movieUserRepository.insert({
         user_id: createMovieDto.user_id,
         movie: { id: createMovieDto.id },
@@ -70,9 +89,11 @@ export class MovieService {
         watched_at:
           createMovieDto.status === TodoStatusEnum.WATCHED ? new Date() : null,
       });
-      return 1;
     }
-    return 0;
+    return this.findOne({
+      id: createMovieDto.id,
+      user_id: createMovieDto.user_id,
+    });
   }
 
   async getAllMovieStateByUser({
@@ -99,24 +120,7 @@ export class MovieService {
     });
   }
 
-  async getMovieInfo(movieId: number): Promise<MovieResponse> {
-    const movieInfo = await lastValueFrom(
-      from(this.tmdbService.movieInfo(movieId)).pipe(
-        // Get Rating
-        map(async (val) => {
-          const imdbData = await this.ratingService.findByImdbId(val.imdb_id);
-          return {
-            ...val,
-            vote_average: imdbData?.vote_average || val.vote_average,
-            vote_count: imdbData?.vote_count || val.vote_count,
-          };
-        }),
-      ),
-    );
-    return movieInfo;
-  }
-
-  async findOne(payload: { id: number; user_id?: string }): Promise<MovieResp> {
+  async findOne(payload: { id: number; user_id?: string }): Promise<any> {
     const qb = this.movieQueryBuilder.queryMovie();
     qb.andWhere('movie.id = :id', { id: payload.id });
 
@@ -125,8 +129,15 @@ export class MovieService {
     }
 
     const model = await qb.getRawOne();
+    return model;
+  }
 
-    const tmdb = await this.getMovieInfo(payload.id);
+  async findOneAndDetail(payload: { id: number; user_id?: string }) {
+    const model = await this.findOne({
+      id: payload.id,
+      user_id: payload.user_id,
+    });
+    const tmdb = await this.mediaService.getMovieInfo(payload.id);
     return {
       account_state: model
         ? {
@@ -184,7 +195,7 @@ export class MovieService {
         ? await lastValueFrom(
             forkJoin(
               movieUserDatas.map((val) => {
-                return this.getMovieInfo(val.id);
+                return this.mediaService.getMovieInfo(val.id);
               }),
             ).pipe(
               catchError(() => []),
@@ -237,7 +248,7 @@ export class MovieService {
 
     const promises = [];
     for (const movie of movies.results) {
-      promises.push(this.tmdbService.getMovieInfo(movie.id));
+      promises.push(this.mediaService.getMovieInfo(movie.id));
     }
 
     const movieFullDetails = (await Promise.all(promises)) || [];

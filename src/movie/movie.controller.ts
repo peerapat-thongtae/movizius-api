@@ -22,12 +22,14 @@ import { ceil } from 'lodash';
 import { TMDBService } from '../medias/tmdb.service';
 import { DiscoverMovieRequest } from 'moviedb-promise';
 import { RatingService } from '../rating/rating.service';
+import { MediasService } from '../medias/medias.service';
 
 @Controller('v2/movie')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class MovieController {
   constructor(
     private readonly movieService: MovieService,
+    private readonly mediaService: MediasService,
     private readonly tmdbService: TMDBService,
     private readonly ratingService: RatingService,
   ) {}
@@ -83,13 +85,18 @@ export class MovieController {
     const resp = await this.movieService.discoverMovie({ ...query });
     return resp;
   }
-  @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.movieService.findOne({ id });
+  @Get('/:id')
+  getMovieInfo(@Param('id') id: number) {
+    return this.mediaService.getMovieInfo(id);
   }
 
   @Get(':id/recommendations')
   getMovieRecommendationsById(@Param('id') id: number) {
-    return this.movieService.findOne({ id });
+    return this.mediaService.getRecommendationMovies(id);
+  }
+
+  @Get(':id/similar')
+  getMovieSimilar(@Param('id') id: number) {
+    return this.mediaService.getSimilarMovies(id);
   }
 }

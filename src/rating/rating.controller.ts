@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { RatingService } from './rating.service';
 
 @Controller('v2/rating')
@@ -17,5 +17,10 @@ export class RatingController {
   @Get('/:id')
   getRatingById(@Param('id') id: string) {
     return this.ratingService.findByImdbId(id);
+  }
+
+  @Post()
+  getRatings(@Body('ids') ids: string[]) {
+    return this.ratingService.findByImdbIds(ids);
   }
 }

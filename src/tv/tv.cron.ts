@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TvService } from '../tv/tv.service';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class TVCron {
@@ -7,4 +8,11 @@ export class TVCron {
     @Inject(TvService)
     private tvService: TvService,
   ) {}
+
+  @Cron('30 18 * * *')
+  async updateTVInfo() {
+    console.log('start');
+    await this.tvService.updateTVInfo();
+    console.log('success');
+  }
 }

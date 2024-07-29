@@ -13,8 +13,13 @@ import { RatingModule } from '../rating/rating.module';
 import { MovieQueryBuilder } from '../movie/movie.query';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Movie, MovieUser]), RatingModule],
+  imports: [
+    TypeOrmModule.forFeature([Movie, MovieUser]),
+    RatingModule,
+    forwardRef(() => MediasModule),
+  ],
   controllers: [MovieController],
   providers: [MovieService, MovieQueryBuilder, TMDBService],
+  exports: [MovieService],
 })
 export class MovieModule {}

@@ -26,6 +26,12 @@ export class Movie {
   @OneToMany(() => MovieUser, (movieUser) => movieUser.movie)
   users: MovieUser[];
 
+  @Column({ type: 'decimal', nullable: true })
+  vote_average: number;
+
+  @Column({ type: 'decimal', nullable: true })
+  vote_count: number;
+
   @CreateDateColumn()
   created_at: Date;
 

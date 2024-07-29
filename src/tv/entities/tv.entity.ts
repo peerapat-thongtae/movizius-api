@@ -28,6 +28,12 @@ export class TV {
   @Column({ type: 'decimal' })
   number_of_episodes: number;
 
+  @Column({ type: 'decimal', nullable: true })
+  vote_average: number;
+
+  @Column({ type: 'decimal', nullable: true })
+  vote_count: number;
+
   @OneToMany(() => TVUser, (tvUser) => tvUser.tv)
   users: TVUser[];
 

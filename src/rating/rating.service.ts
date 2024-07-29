@@ -6,7 +6,7 @@ import { first, last } from 'lodash';
 import { tsvJSON } from '../shared/helpers';
 import * as fs from 'node:fs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Rating } from 'src/rating/entities/rating.entity';
+import { Rating } from '../rating/entities/rating.entity';
 import { Repository } from 'typeorm';
 import { from as copyFrom } from 'pg-copy-streams';
 import { Readable } from 'node:stream';

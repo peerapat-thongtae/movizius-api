@@ -1,48 +1,25 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MediasService } from './medias.service';
-import { MovieController } from './movie.controller';
 import { TMDBService } from './tmdb.service';
 import { LineModule } from '../line/line.module';
 import { AuthModule } from '../auth/auth.module';
 import { AuthService } from '../auth/auth.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { TVController } from './tv.controller';
-import { RatingController } from './rating.controller';
-import { Media, MediaSchema } from './schema/medias.schema';
-import { Imdb, ImdbSchema } from './schema/imdb.schema';
-import { HttpModule, HttpService } from '@nestjs/axios';
-import { AnimeController } from './anime.controller';
-import { MediaCronService } from '../medias/media-cron.service';
+import { HttpModule } from '@nestjs/axios';
 import { RatingModule } from '../rating/rating.module';
+import { MovieModule } from '../movie/movie.module';
+import { TvModule } from '../tv/tv.module';
 
 @Module({
-  controllers: [
-    MovieController,
-    TVController,
-    RatingController,
-    AnimeController,
-  ],
+  controllers: [],
   imports: [
-    LineModule,
+    forwardRef(() => LineModule),
     HttpModule,
     forwardRef(() => AuthModule),
-    MongooseModule.forFeature([
-      {
-        name: Media.name,
-        schema: MediaSchema,
-        collection: 'media',
-      },
-    ]),
-    MongooseModule.forFeature([
-      {
-        name: Imdb.name,
-        schema: ImdbSchema,
-        collection: 'imdb',
-      },
-    ]),
-    RatingModule,
+    forwardRef(() => RatingModule),
+    forwardRef(() => MovieModule),
+    forwardRef(() => TvModule),
   ],
-  providers: [MediasService, TMDBService, AuthService, MediaCronService],
-  exports: [MediasService, TMDBService, AuthService, MediaCronService],
+  providers: [MediasService, TMDBService, AuthService],
+  exports: [MediasService, TMDBService, AuthService],
 })
 export class MediasModule {}

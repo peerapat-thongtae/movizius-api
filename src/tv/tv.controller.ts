@@ -18,11 +18,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateTvDto, UpdateTVEpisodeDto } from '../tv/dto/create-tv.dto';
 import { ceil } from 'lodash';
 import { DiscoverTvRequest } from 'moviedb-promise';
+import { MediasService } from '../medias/medias.service';
 
 @Controller('v2/tv')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class TvController {
-  constructor(private readonly tvService: TvService) {}
+  constructor(
+    private readonly tvService: TvService,
+    private readonly mediaService: MediasService,
+  ) {}
 
   @Get('/')
   @UseGuards(AuthGuard('jwt'))
@@ -70,5 +74,20 @@ export class TvController {
   @Get('/discover')
   discoverTV(@Query() query: DiscoverTvRequest) {
     return this.tvService.discoverTV(query);
+  }
+
+  @Get('/:id')
+  getTVDetail(@Param('id') id: number) {
+    return this.mediaService.getTVInfo(id);
+  }
+
+  @Get(':id/recommendations')
+  getMovieRecommendationsById(@Param('id') id: number) {
+    return this.mediaService.getRecommendationTV(id);
+  }
+
+  @Get(':id/similar')
+  getMovieSimilar(@Param('id') id: number) {
+    return this.mediaService.getRecommendationTV(id);
   }
 }

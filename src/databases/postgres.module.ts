@@ -12,6 +12,7 @@ import { Rating } from '../rating/entities/rating.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
+        console.log(configService.get('NODE_ENV'));
         return {
           type: 'postgres',
           host: configService.get('POSTGRES_HOST'),
@@ -22,7 +23,7 @@ import { Rating } from '../rating/entities/rating.entity';
           entities: [Movie, MovieUser, Rating],
           synchronize: true,
           logging: false,
-          ssl: true,
+          ssl: configService.get('NODE_ENV') === 'development' ? false : true,
           autoLoadEntities: true,
         };
       },

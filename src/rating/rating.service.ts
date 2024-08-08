@@ -101,6 +101,7 @@ export class RatingService {
           ids: val.map((data) => data.imdb_id),
           max_id: last(val).imdb_id,
           ratings: val,
+          updated_at: new Date(),
         });
       });
 

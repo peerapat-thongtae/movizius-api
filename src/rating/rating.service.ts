@@ -60,15 +60,18 @@ export class RatingService {
     return findImdb;
   }
   async updateIMDBDetail() {
-    const res = await axios.get(
-      'https://datasets.imdbws.com/title.ratings.tsv.gz',
-      {
+    const res = await axios
+      .get('https://datasets.imdbws.com/title.ratings.tsv.gz', {
         responseType: 'arraybuffer', // Important
         headers: {
           'Content-Type': 'application/gzip',
         },
-      },
-    );
+      })
+      .catch(() => undefined);
+
+    if (!res) {
+      throw new Error('Error');
+    }
 
     let datasRes: unknown;
     // Calling gunzip method

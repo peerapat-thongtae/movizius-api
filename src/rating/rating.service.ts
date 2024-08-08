@@ -60,75 +60,70 @@ export class RatingService {
     return findImdb;
   }
   async updateIMDBDetail() {
-    try {
-      const res = await axios.get(
-        'https://datasets.imdbws.com/title.ratings.tsv.gz',
-        {
-          responseType: 'arraybuffer', // Important
-          headers: {
-            'Content-Type': 'application/gzip',
-          },
+    const res = await axios.get(
+      'https://datasets.imdbws.com/title.ratings.tsv.gz',
+      {
+        responseType: 'arraybuffer', // Important
+        headers: {
+          'Content-Type': 'application/gzip',
         },
-      );
+      },
+    );
 
-      let datasRes: unknown;
-      // Calling gunzip method
-      await zlib.gunzip(res.data, async (err, buffer) => {
-        const resJSON = tsvJSON(buffer.toString());
-        fs.writeFileSync('imdb.json', JSON.stringify(resJSON));
+    let datasRes: unknown;
+    // Calling gunzip method
+    await zlib.gunzip(res.data, async (err, buffer) => {
+      const resJSON = tsvJSON(buffer.toString());
+      fs.writeFileSync('imdb.json', JSON.stringify(resJSON));
 
-        const datas = resJSON
-          .map((imdbData) => {
-            return {
-              imdb_id: imdbData.tconst,
-              vote_average: Number(imdbData.averageRating) || 0,
-              vote_count: Number(imdbData.numVotes) || 0,
-            };
-          })
-          .filter(
-            (val) =>
-              val.imdb_id && val.vote_count > 100 && val.vote_average > 2,
-          );
+      const datas = resJSON
+        .map((imdbData) => {
+          return {
+            imdb_id: imdbData.tconst,
+            vote_average: Number(imdbData.averageRating) || 0,
+            vote_count: Number(imdbData.numVotes) || 0,
+          };
+        })
+        .filter(
+          (val) => val.imdb_id && val.vote_count > 100 && val.vote_average > 2,
+        );
 
-        const sortDatas = orderBy(datas, 'imdb_id', 'asc');
-        const chunkDatas = chunk(sortDatas, 1000);
-        // console.log(sortDatas);
-        await this.deleteAll();
+      const sortDatas = orderBy(datas, 'imdb_id', 'asc');
+      const chunkDatas = chunk(sortDatas, 1000);
+      // console.log(sortDatas);
+      await this.deleteAll();
 
-        const ratings = chunkDatas.map((val) => {
-          return this.ratingRepository.create({
-            ids: val.map((data) => data.imdb_id),
-            max_id: last(val).imdb_id,
-            ratings: val,
-          });
+      const ratings = chunkDatas.map((val) => {
+        return this.ratingRepository.create({
+          ids: val.map((data) => data.imdb_id),
+          max_id: last(val).imdb_id,
+          ratings: val,
         });
-
-        await this.ratingRepository.save(ratings);
-        //
-        // for (const data of sortDatas) {
-        //   const rating = this.ratingRepository.create(data);
-        //   await this.ratingRepository.save(rating);
-        // }
-        // const rating = sortDatas.map((val) =>
-        //   this.ratingRepository.create(val),
-        // );
-        // await this.ratingRepository.save(rating);
-        // console.log(sortDatas.length);
-        // let query =
-        //   'INSERT INTO rating (imdb_id, vote_average, vote_count) VALUES \r\n';
-        // for (const data of sortDatas) {
-        //   query += `('${data.imdb_id}', ${data.vote_average}, ${data.vote_count}); \r\n`;
-        // }
-
-        // await this.ratingRepository.query(query);
-
-        // datasRes = sortDatas;
       });
 
-      return datasRes;
-    } catch (err) {
-      return err;
-    }
+      await this.ratingRepository.save(ratings);
+      //
+      // for (const data of sortDatas) {
+      //   const rating = this.ratingRepository.create(data);
+      //   await this.ratingRepository.save(rating);
+      // }
+      // const rating = sortDatas.map((val) =>
+      //   this.ratingRepository.create(val),
+      // );
+      // await this.ratingRepository.save(rating);
+      // console.log(sortDatas.length);
+      // let query =
+      //   'INSERT INTO rating (imdb_id, vote_average, vote_count) VALUES \r\n';
+      // for (const data of sortDatas) {
+      //   query += `('${data.imdb_id}', ${data.vote_average}, ${data.vote_count}); \r\n`;
+      // }
+
+      // await this.ratingRepository.query(query);
+
+      // datasRes = sortDatas;
+    });
+
+    return datasRes;
   }
 
   async deleteAll() {

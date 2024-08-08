@@ -23,7 +23,7 @@ import { Rating } from '../rating/entities/rating.entity';
           entities: [Movie, MovieUser, Rating],
           synchronize: true,
           logging: false,
-          ssl: configService.get('NODE_ENV') === 'development' ? false : true,
+          ssl: configService.get('NODE_ENV') === 'development' ? true : true,
           autoLoadEntities: true,
         };
       },

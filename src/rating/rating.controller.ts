@@ -1,9 +1,13 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { RatingService } from './rating.service';
+import { RatingCronJob } from '../rating/rating.cron';
 
 @Controller('v2/rating')
 export class RatingController {
-  constructor(private readonly ratingService: RatingService) {}
+  constructor(
+    private readonly ratingService: RatingService,
+    private readonly ratingCronService: RatingCronJob,
+  ) {}
 
   @Get('')
   getRating() {
@@ -12,7 +16,7 @@ export class RatingController {
 
   @Get('/update')
   update() {
-    return this.ratingService.updateIMDBDetail();
+    return this.ratingCronService.updateIMDBDetail();
   }
   @Get('/:id')
   getRatingById(@Param('id') id: string) {

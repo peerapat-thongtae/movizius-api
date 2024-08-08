@@ -12,6 +12,7 @@ import { PostgresModule } from './databases/postgres.module';
 import { MovieModule } from './movie/movie.module';
 import { RatingModule } from './rating/rating.module';
 import { TvModule } from './tv/tv.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TvModule } from './tv/tv.module';
     MovieModule,
     RatingModule,
     TvModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [AppService],

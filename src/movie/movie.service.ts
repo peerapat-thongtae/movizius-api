@@ -67,7 +67,6 @@ export class MovieService {
     });
     if (foundMovie) {
       if (createMovieDto.status === TodoStatusEnum.WATCHED) {
-        console.log(foundMovie);
         await this.movieUserRepository.update(
           {
             id:

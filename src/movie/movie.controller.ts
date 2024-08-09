@@ -55,7 +55,10 @@ export class MovieController {
 
   @Get('random')
   randomMovie() {
-    return this.movieService.randomMovie(5);
+    return this.movieService.randomMovie({
+      total: 5,
+      status: TodoStatusEnum.WATCHLIST,
+    });
   }
 
   @Get('/')

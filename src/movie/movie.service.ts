@@ -280,10 +280,27 @@ export class MovieService {
     return `This action removes a #${id} movie`;
   }
 
-  async randomMovie(total: number) {
+  async randomMovie(payload: { total: number, status?: TodoStatusEnum }) {
+    const total = payload.total
     const qb = this.movieQueryBuilder.queryMovie();
     qb.orderBy('RANDOM()');
     qb.limit(total);
+
+    if (payload.status === TodoStatusEnum.WATCHED) {
+      qb.andWhere('watched_at is not null');
+      qb.orderBy('movie_user.watched_at', 'DESC').addOrderBy(
+        'movie.id',
+        'DESC',
+      );
+    }
+
+    if (payload.status === TodoStatusEnum.WATCHLIST) {
+      qb.andWhere('watched_at is null and watchlisted_at is not null');
+      qb.orderBy('movie_user.watchlisted_at', 'DESC').addOrderBy(
+        'movie.id',
+        'DESC',
+      );
+    }
 
     const resDB = await qb.getRawMany();
 

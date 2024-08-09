@@ -18,4 +18,10 @@ export class TMDBService extends MovieDb {
       page,
     });
   }
+
+  async getMovieByIds(ids: number[]) {
+    const promises = ids.map((val) => this.movieInfo(val));
+
+    return Promise.all(promises);
+  }
 }

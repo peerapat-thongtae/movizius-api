@@ -279,4 +279,18 @@ export class MovieService {
   remove(id: number) {
     return `This action removes a #${id} movie`;
   }
+
+  async randomMovie(total: number) {
+    const qb = this.movieQueryBuilder.queryMovie();
+    qb.orderBy('RANDOM()');
+    qb.limit(total);
+
+    const resDB = await qb.getRawMany();
+
+    const movies = await this.tmdbService.getMovieByIds(
+      resDB.map((res) => res.id),
+    );
+
+    return movies.map((val) => val.title);
+  }
 }

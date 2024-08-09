@@ -53,6 +53,11 @@ export class MovieController {
     });
   }
 
+  @Get('random')
+  randomMovie() {
+    return this.movieService.randomMovie(5);
+  }
+
   @Get('/')
   @UseGuards(AuthGuard('jwt'))
   async getAllMovieStateByUser(@Req() req: any) {

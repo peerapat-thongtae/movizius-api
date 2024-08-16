@@ -5,10 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Movie } from '../movie/entities/movie.entity';
 import { MovieUser } from '../movie/entities/movie_user.entity';
 import { TMDBService } from '../medias/tmdb.service';
-import { MediasService } from '../medias/medias.service';
 import { MediasModule } from '../medias/medias.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Imdb, ImdbSchema } from '../medias/schema/imdb.schema';
 import { RatingModule } from '../rating/rating.module';
 import { MovieQueryBuilder } from '../movie/movie.query';
 

@@ -13,6 +13,7 @@ import { MovieModule } from './movie/movie.module';
 import { RatingModule } from './rating/rating.module';
 import { TvModule } from './tv/tv.module';
 import { CronModule } from './cron/cron.module';
+import { MongoModule } from './databases/mongo.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CronModule } from './cron/cron.module';
     LineModule,
     ScheduleModule.forRoot(),
     PostgresModule,
+    MongoModule,
     ChatbotModule,
     MovieModule,
     RatingModule,

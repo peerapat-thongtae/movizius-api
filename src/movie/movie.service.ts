@@ -280,10 +280,10 @@ export class MovieService {
     return `This action removes a #${id} movie`;
   }
 
-  async randomMovie(payload: { total: number, status?: TodoStatusEnum }) {
-    const total = payload.total
+  async randomMovie(payload: { total: number; status?: TodoStatusEnum }) {
+    const total = payload.total;
     const qb = this.movieQueryBuilder.queryMovie();
-    
+
     if (payload.status === TodoStatusEnum.WATCHED) {
       qb.andWhere('watched_at is not null');
       // qb.orderBy('movie_user.watched_at', 'DESC').addOrderBy(

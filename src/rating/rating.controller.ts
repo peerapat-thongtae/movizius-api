@@ -16,7 +16,7 @@ export class RatingController {
 
   @Get('/update')
   update() {
-    return this.ratingCronService.updateIMDBDetail();
+    return this.ratingService.updateIMDBDetail();
   }
   @Get('/:id')
   getRatingById(@Param('id') id: string) {

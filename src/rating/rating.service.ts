@@ -6,8 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Imdb } from '../rating/schema/imdb.schema';
 import { Model } from 'mongoose';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const zlib = require('zlib');
+import * as zlib from 'zlib';
 
 @Injectable()
 export class RatingService {
@@ -52,56 +51,59 @@ export class RatingService {
 
   async updateIMDBDetail() {
     console.log('start imdb');
-    try {
-      const res = await axios.get(
-        'https://datasets.imdbws.com/title.ratings.tsv.gz',
-        {
-          responseType: 'arraybuffer', // Important
-          headers: {
-            'Content-Type': 'application/gzip',
-          },
+    const res = await axios.get(
+      'https://datasets.imdbws.com/title.ratings.tsv.gz',
+      {
+        responseType: 'arraybuffer', // Important
+        headers: {
+          'Content-Type': 'application/gzip',
         },
-      );
+      },
+    );
 
-      console.log('res', res.data);
+    console.log('res', res.data);
 
-      // Calling gunzip method
-      zlib.gunzip(res.data, async (err, buffer) => {
-        console.log('eee', err);
-        const resJSON = tsvJSON(buffer.toString());
-        const datas = resJSON
-          .map((imdbData) => {
-            return {
-              id: imdbData.tconst,
-              imdb_id: imdbData.tconst,
-              vote_average: Number(imdbData.averageRating) || 0,
-              vote_count: Number(imdbData.numVotes) || 0,
-            };
-          })
-          .filter(
-            (val) => val.id && val.vote_count > 100 && val.vote_average > 2,
-          );
+    // Calling gunzip method
+    // await zlib.gunzip(res.data, async (err, buffer) => {});
 
-        await this.ratingModel.deleteMany();
-
-        const sortDatas = orderBy(datas, 'votes', 'desc');
-        const newa = chunk(sortDatas, 1500);
-
-        await this.ratingModel.create(
-          newa.map((val) => {
-            return {
-              ids: val.map((data) => data.imdb_id),
-              ratings: val,
-              max_id: last(val)?.imdb_id,
-              updated_at: new Date(),
-            };
-          }),
-        );
-        console.log('end');
+    const buffer = await new Promise((resolve, reject) => {
+      zlib.gunzip(res.data, (err, buffer) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(buffer);
+        }
       });
-    } catch (err) {
-      console.log(err);
-    }
+    });
+
+    const resJSON = tsvJSON(buffer.toString());
+    const datas = resJSON
+      .map((imdbData) => {
+        return {
+          id: imdbData.tconst,
+          imdb_id: imdbData.tconst,
+          vote_average: Number(imdbData.averageRating) || 0,
+          vote_count: Number(imdbData.numVotes) || 0,
+        };
+      })
+      .filter((val) => val.id && val.vote_count > 100 && val.vote_average > 2);
+
+    await this.ratingModel.deleteMany();
+
+    const sortDatas = orderBy(datas, 'votes', 'desc');
+    const newa = chunk(sortDatas, 1500);
+
+    await this.ratingModel.create(
+      newa.map((val) => {
+        return {
+          ids: val.map((data) => data.imdb_id),
+          ratings: val,
+          max_id: last(val)?.imdb_id,
+          updated_at: new Date(),
+        };
+      }),
+    );
+
     console.log('end imdb');
     return 8;
   }

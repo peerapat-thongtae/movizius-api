@@ -7,6 +7,7 @@ import { Imdb } from '../rating/schema/imdb.schema';
 import { Model } from 'mongoose';
 
 import * as zlib from 'zlib';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class RatingService {
@@ -49,6 +50,7 @@ export class RatingService {
     return findImdb;
   }
 
+  @Cron('42 1 * * *')
   async updateIMDBDetail() {
     console.log('start imdb');
     const res = await axios.get(
@@ -60,8 +62,6 @@ export class RatingService {
         },
       },
     );
-
-    console.log('res', res.data);
 
     // Calling gunzip method
     // await zlib.gunzip(res.data, async (err, buffer) => {});

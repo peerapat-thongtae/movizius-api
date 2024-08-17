@@ -52,56 +52,54 @@ export class RatingService {
 
   async updateIMDBDetail() {
     console.log('start imdb');
-    const res = await axios
-      .get('https://datasets.imdbws.com/title.ratings.tsv.gz', {
-        responseType: 'arraybuffer', // Important
-        headers: {
-          'Content-Type': 'application/gzip',
+    try {
+      const res = await axios.get(
+        'https://datasets.imdbws.com/title.ratings.tsv.gz',
+        {
+          responseType: 'arraybuffer', // Important
+          headers: {
+            'Content-Type': 'application/gzip',
+          },
         },
-      })
-      .catch((err) => {
-        console.log(err);
-        return null;
-      });
-
-    if (!res.data) {
-      return;
-    }
-
-    // Calling gunzip method
-    zlib.gunzip(res.data, async (err, buffer) => {
-      const resJSON = tsvJSON(buffer.toString());
-      const datas = resJSON
-        .map((imdbData) => {
-          return {
-            id: imdbData.tconst,
-            imdb_id: imdbData.tconst,
-            vote_average: Number(imdbData.averageRating) || 0,
-            vote_count: Number(imdbData.numVotes) || 0,
-          };
-        })
-        .filter(
-          (val) => val.id && val.vote_count > 100 && val.vote_average > 2,
-        );
-
-      await this.ratingModel.deleteMany();
-
-      const sortDatas = orderBy(datas, 'votes', 'desc');
-      const newa = chunk(sortDatas, 1500);
-
-      await this.ratingModel.create(
-        newa.map((val) => {
-          return {
-            ids: val.map((data) => data.imdb_id),
-            ratings: val,
-            max_id: last(val)?.imdb_id,
-            updated_at: new Date(),
-          };
-        }),
       );
-      console.log('end');
-    });
 
+      // Calling gunzip method
+      zlib.gunzip(res.data, async (err, buffer) => {
+        const resJSON = tsvJSON(buffer.toString());
+        const datas = resJSON
+          .map((imdbData) => {
+            return {
+              id: imdbData.tconst,
+              imdb_id: imdbData.tconst,
+              vote_average: Number(imdbData.averageRating) || 0,
+              vote_count: Number(imdbData.numVotes) || 0,
+            };
+          })
+          .filter(
+            (val) => val.id && val.vote_count > 100 && val.vote_average > 2,
+          );
+
+        await this.ratingModel.deleteMany();
+
+        const sortDatas = orderBy(datas, 'votes', 'desc');
+        const newa = chunk(sortDatas, 1500);
+
+        await this.ratingModel.create(
+          newa.map((val) => {
+            return {
+              ids: val.map((data) => data.imdb_id),
+              ratings: val,
+              max_id: last(val)?.imdb_id,
+              updated_at: new Date(),
+            };
+          }),
+        );
+        console.log('end');
+      });
+    } catch (err) {
+      console.log(err);
+    }
+    console.log('end imdb');
     return;
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { chunk, first, last, orderBy, take } from 'lodash';
+import { chunk, first, last, max, min, orderBy, take } from 'lodash';
 import { tsvJSON } from '../shared/helpers';
 import { InjectModel } from '@nestjs/mongoose';
 import { Imdb } from '../rating/schema/imdb.schema';
@@ -22,7 +22,19 @@ export class RatingService {
   }
 
   async findByImdbIds(imdb_ids: string[]): Promise<any[]> {
-    const res = await this.ratingModel.find({ ids: imdb_ids });
+    const imdbIds = imdb_ids.filter((val) => val);
+    const minId = min(imdbIds);
+    const maxId = max(imdbIds);
+    const res = await this.ratingModel.find({
+      $and: [
+        {
+          max_id: { $gte: minId },
+        },
+        {
+          min_id: { $lte: maxId },
+        },
+      ],
+    });
     if (!res) {
       return null;
     }
@@ -30,7 +42,7 @@ export class RatingService {
     for (const imdbData of res) {
       const ratingData = JSON.parse(imdbData.ratings);
       const filterImdb = ratingData.filter((val) =>
-        imdb_ids.includes(val.imdb_id),
+        imdbIds.includes(val.imdb_id),
       );
       ratings.push(...filterImdb);
     }

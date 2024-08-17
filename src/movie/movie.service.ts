@@ -193,15 +193,8 @@ export class MovieService {
 
     const movieFullDetails = (await Promise.all(promises)) || [];
 
-    const imdbs = await this.ratingService.findByImdbIds(
-      movieFullDetails.map((val) => val.imdb_id),
-    );
-
     movieFullDetails.forEach((val) => {
-      const findIMDB = imdbs.find((imdb) => imdb.imdb_id === val.imdb_id);
       val.media_type = 'movie';
-      val.vote_average = findIMDB?.vote_average || val.vote_average;
-      val.vote_count = findIMDB?.vote_count || val.vote_count;
     });
 
     movies.results = movieFullDetails;

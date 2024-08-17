@@ -346,15 +346,9 @@ export class TvService {
 
     const tvFullDetails = (await Promise.all(promises)) || [];
 
-    const imdbs = await this.ratingService.findByImdbIds(
-      tvFullDetails.map((val) => val.imdb_id),
-    );
-
     tvFullDetails.forEach((val) => {
-      const findIMDB = imdbs.find((imdb) => imdb.imdb_id === val.imdb_id);
+      // const findIMDB = imdbs.find((imdb) => imdb.imdb_id === val.imdb_id);
       val.media_type = 'tv';
-      val.vote_average = findIMDB?.vote_average || val.vote_average;
-      val.vote_count = findIMDB?.vote_count || val.vote_count;
     });
 
     tvs.results = tvFullDetails;

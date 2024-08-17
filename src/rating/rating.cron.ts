@@ -16,13 +16,11 @@ export class RatingCronJob {
   // @Cron('25 21 * * *')
   async updateIMDBDetail() {
     try {
-      await this.ratingService.updateIMDBDetail();
-      await this.lineService.pushMessage(process.env.DEV_LINE_USER_ID, {
-        type: 'text',
-        text: 'Updated IMDB Success',
-      });
-
-      return;
+      return this.ratingService.updateIMDBDetail();
+      // await this.lineService.pushMessage(process.env.DEV_LINE_USER_ID, {
+      //   type: 'text',
+      //   text: 'Updated IMDB Success',
+      // });
     } catch (err) {
       return err;
     }

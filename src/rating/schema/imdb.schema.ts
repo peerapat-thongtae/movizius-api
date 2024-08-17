@@ -10,8 +10,11 @@ export class Imdb {
   @Prop({ type: Object })
   ratings: any;
 
-  @Prop({ type: Types.Array, default: [] })
-  ids: string[];
+  // @Prop({ type: Types.Array, default: [] })
+  // ids: string[];
+
+  @Prop({ type: String })
+  min_id: string;
 
   @Prop({ type: String })
   max_id: string;

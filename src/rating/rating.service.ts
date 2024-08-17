@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { chunk, last, orderBy, take } from 'lodash';
+import { chunk, first, last, orderBy, take } from 'lodash';
 import { tsvJSON } from '../shared/helpers';
 import { InjectModel } from '@nestjs/mongoose';
 import { Imdb } from '../rating/schema/imdb.schema';
@@ -28,7 +28,7 @@ export class RatingService {
     }
     const ratings = [];
     for (const imdbData of res) {
-      const ratingData = imdbData.ratings;
+      const ratingData = JSON.parse(imdbData.ratings);
       const filterImdb = ratingData.filter((val) =>
         imdb_ids.includes(val.imdb_id),
       );
@@ -38,11 +38,20 @@ export class RatingService {
   }
 
   async findByImdbId(imdb_id: string): Promise<any> {
-    const res = await this.ratingModel.findOne({ ids: imdb_id });
+    const res = await this.ratingModel.findOne({
+      $and: [
+        {
+          max_id: { $gte: imdb_id },
+        },
+        {
+          min_id: { $lte: imdb_id },
+        },
+      ],
+    });
     if (!res) {
       return null;
     }
-    const ratings = res.ratings;
+    const ratings = JSON.parse(res.ratings);
     const findImdb = ratings.find((val) => val.imdb_id === imdb_id);
     if (!findImdb) {
       return null;
@@ -93,13 +102,14 @@ export class RatingService {
     const sortDatas = orderBy(datas, 'votes', 'desc');
     const newa = chunk(sortDatas, 1500);
 
-    await this.ratingModel.create(
+    await this.ratingModel.insertMany(
       newa.map((val) => {
         return {
-          ids: val.map((data) => data.imdb_id),
-          ratings: val,
+          // ids: JSON.stringify(val.map((data) => data.imdb_id)),
+          ratings: JSON.stringify(val),
+          min_id: first(val)?.imdb_id,
           max_id: last(val)?.imdb_id,
-          updated_at: new Date(),
+          // updated_at: new Date(),
         };
       }),
     );

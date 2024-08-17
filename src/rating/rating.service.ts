@@ -28,7 +28,7 @@ export class RatingService {
     }
     const ratings = [];
     for (const imdbData of res) {
-      const ratingData = JSON.parse(imdbData.ratings);
+      const ratingData = imdbData.ratings;
       const filterImdb = ratingData.filter((val) =>
         imdb_ids.includes(val.imdb_id),
       );
@@ -42,7 +42,7 @@ export class RatingService {
     if (!res) {
       return null;
     }
-    const ratings = JSON.parse(res.ratings);
+    const ratings = res.ratings;
     const findImdb = ratings.find((val) => val.imdb_id === imdb_id);
     if (!findImdb) {
       return null;
@@ -93,13 +93,13 @@ export class RatingService {
     const sortDatas = orderBy(datas, 'votes', 'desc');
     const newa = chunk(sortDatas, 1500);
 
-    await this.ratingModel.insertMany(
+    await this.ratingModel.create(
       newa.map((val) => {
         return {
           ids: val.map((data) => data.imdb_id),
-          ratings: JSON.stringify(val),
-          // max_id: last(val)?.imdb_id,
-          // updated_at: new Date(),
+          ratings: val,
+          max_id: last(val)?.imdb_id,
+          updated_at: new Date(),
         };
       }),
     );

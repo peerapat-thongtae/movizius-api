@@ -52,15 +52,21 @@ export class RatingService {
 
   async updateIMDBDetail() {
     console.log('start imdb');
-    const res = await axios.get(
-      'https://datasets.imdbws.com/title.ratings.tsv.gz',
-      {
+    const res = await axios
+      .get('https://datasets.imdbws.com/title.ratings.tsv.gz', {
         responseType: 'arraybuffer', // Important
         headers: {
           'Content-Type': 'application/gzip',
         },
-      },
-    );
+      })
+      .catch((err) => {
+        console.log(err);
+        return null;
+      });
+
+    if (!res.data) {
+      return;
+    }
 
     // Calling gunzip method
     zlib.gunzip(res.data, async (err, buffer) => {

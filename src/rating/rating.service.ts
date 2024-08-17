@@ -5,7 +5,7 @@ import { tsvJSON } from '../shared/helpers';
 import { InjectModel } from '@nestjs/mongoose';
 import { Imdb } from '../rating/schema/imdb.schema';
 import { Model } from 'mongoose';
-
+import * as fs from 'fs';
 import * as zlib from 'zlib';
 import { Cron } from '@nestjs/schedule';
 
@@ -50,9 +50,9 @@ export class RatingService {
     return findImdb;
   }
 
-  @Cron('42 1 * * *')
   async updateIMDBDetail() {
     console.log('start imdb');
+    const start = performance.now();
     const res = await axios.get(
       'https://datasets.imdbws.com/title.ratings.tsv.gz',
       {
@@ -103,8 +103,8 @@ export class RatingService {
         };
       }),
     );
-
-    console.log('end imdb');
-    return 8;
+    const end = performance.now();
+    console.log('end imdb', new Date(end - start).getSeconds());
+    return 9;
   }
 }

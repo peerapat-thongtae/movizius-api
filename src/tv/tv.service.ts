@@ -59,26 +59,24 @@ export class TvService {
         updated_at: { $lte: twelveHoursAgo },
       },
       {},
-      { limit: 10 },
+      { limit: 80 },
     );
     const tmdbs = await Promise.all(
       k.map((data) => this.mediaService.getTVInfo(data.id)),
     );
     for (const tmdb of tmdbs) {
-      const findRating = await this.ratingService.findByImdbId(tmdb.imdb_id);
       await this.tvModel.updateOne({
         id: tmdb.id,
         number_of_episodes: tmdb.number_of_episodes,
         number_of_seasons: tmdb.number_of_seasons,
-        title: tmdb.name,
-        media_type: this.media_type,
+        name: tmdb.name,
         is_anime:
           tmdb.original_language === 'ja' &&
           tmdb.genres.find((genre) => genre.id === 16)
             ? true
             : false,
-        vote_average: findRating?.vote_average || tmdb.vote_average,
-        vote_count: findRating?.vote_count || tmdb.vote_count,
+        vote_average: tmdb?.vote_average,
+        vote_count: tmdb?.vote_count,
         updated_at: new Date(),
       });
     }

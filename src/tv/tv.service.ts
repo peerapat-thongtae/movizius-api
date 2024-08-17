@@ -52,7 +52,15 @@ export class TvService {
   ) {}
 
   async updateTVInfo() {
-    const k = await this.tvModel.find({});
+    const now = new Date();
+    const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    const k = await this.tvModel.find(
+      {
+        updated_at: { $lte: twelveHoursAgo },
+      },
+      {},
+      { limit: 10 },
+    );
     const tmdbs = await Promise.all(
       k.map((data) => this.mediaService.getTVInfo(data.id)),
     );
@@ -74,7 +82,7 @@ export class TvService {
         updated_at: new Date(),
       });
     }
-    return 1;
+    return k.length;
   }
   async createOrGet(id: number) {
     const tmdb = await this.mediaService.getTVInfo(id);

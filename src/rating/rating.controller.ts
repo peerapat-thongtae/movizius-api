@@ -29,7 +29,7 @@ export class RatingController {
   }
 
   // --------- Cron ----------
-  @Get('/cron/update-ratin')
+  @Get('/cron/update-rating')
   updateRating() {
     return this.ratingCronService.updateIMDBDetail();
   }

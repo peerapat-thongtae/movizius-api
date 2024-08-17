@@ -92,7 +92,7 @@ export class TvController {
   }
 
   // -------- CRON ----------
-  @Get('/update-info')
+  @Get('/cron/update-info')
   updateInfo() {
     return this.tvService.updateTVInfo();
   }

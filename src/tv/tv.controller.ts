@@ -90,4 +90,10 @@ export class TvController {
   getMovieSimilar(@Param('id') id: number) {
     return this.mediaService.getRecommendationTV(id);
   }
+
+  // -------- CRON ----------
+  @Get('/update-info')
+  updateInfo() {
+    return this.tvService.updateTVInfo();
+  }
 }

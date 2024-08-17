@@ -71,6 +71,7 @@ export class TvService {
             : false,
         vote_average: findRating?.vote_average || tmdb.vote_average,
         vote_count: findRating?.vote_count || tmdb.vote_count,
+        updated_at: new Date(),
       });
     }
     return 1;

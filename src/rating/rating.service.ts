@@ -63,6 +63,8 @@ export class RatingService {
         },
       );
 
+      console.log('res', res);
+
       // Calling gunzip method
       zlib.gunzip(res.data, async (err, buffer) => {
         const resJSON = tsvJSON(buffer.toString());
@@ -100,6 +102,6 @@ export class RatingService {
       console.log(err);
     }
     console.log('end imdb');
-    return;
+    return 8;
   }
 }

@@ -62,8 +62,6 @@ export class RatingService {
       },
     );
 
-    await this.ratingModel.deleteMany();
-
     // Calling gunzip method
     zlib.gunzip(res.data, async (err, buffer) => {
       const resJSON = tsvJSON(buffer.toString());
@@ -79,6 +77,8 @@ export class RatingService {
         .filter(
           (val) => val.id && val.vote_count > 100 && val.vote_average > 2,
         );
+
+      await this.ratingModel.deleteMany();
 
       const sortDatas = orderBy(datas, 'votes', 'desc');
       const newa = chunk(sortDatas, 1500);

@@ -22,7 +22,7 @@ export class RatingService {
   }
 
   async findByImdbIds(imdb_ids: string[]): Promise<any[]> {
-    const res = await this.ratingModel.find();
+    const res = await this.ratingModel.find({ ids: imdb_ids });
     if (!res) {
       return null;
     }
@@ -38,7 +38,7 @@ export class RatingService {
   }
 
   async findByImdbId(imdb_id: string): Promise<any> {
-    const res = await this.ratingModel.findOne();
+    const res = await this.ratingModel.findOne({ ids: imdb_id });
     if (!res) {
       return null;
     }
@@ -96,7 +96,7 @@ export class RatingService {
     await this.ratingModel.insertMany(
       newa.map((val) => {
         return {
-          // ids: val.map((data) => data.imdb_id),
+          ids: val.map((data) => data.imdb_id),
           ratings: JSON.stringify(val),
           // max_id: last(val)?.imdb_id,
           // updated_at: new Date(),

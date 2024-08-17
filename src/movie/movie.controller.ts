@@ -17,11 +17,7 @@ import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { AuthGuard } from '@nestjs/passport';
-import { FilterMovieRequest } from '../movie/dto/filter-movie.dto';
-import { ceil } from 'lodash';
-import { TMDBService } from '../medias/tmdb.service';
 import { DiscoverMovieRequest } from 'moviedb-promise';
-import { RatingService } from '../rating/rating.service';
 import { MediasService } from '../medias/medias.service';
 
 @Controller('v2/movie')
@@ -30,14 +26,12 @@ export class MovieController {
   constructor(
     private readonly movieService: MovieService,
     private readonly mediaService: MediasService,
-    private readonly tmdbService: TMDBService,
-    private readonly ratingService: RatingService,
   ) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
-  updateMovieStatus(@Req() req: any, @Body() createMovieDto: CreateMovieDto) {
-    return this.movieService.updateMovieStatus({
+  updateStatus(@Req() req: any, @Body() createMovieDto: CreateMovieDto) {
+    return this.movieService.updateStatus({
       ...createMovieDto,
       user_id: req?.user?.sub,
     });

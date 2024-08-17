@@ -15,7 +15,7 @@ export interface ITVAccountState {
   id: number;
   number_of_episodes: number;
   number_of_seasons: number;
-  account_state_id: number;
+  account_state_id?: number;
   watchlisted_at: Date | null;
   watched_at: Date | null;
   account_status: TodoStatusEnum;
@@ -28,3 +28,16 @@ export interface IEpisodeWatched {
   season_number: number;
   watched_at: Date | null;
 }
+
+export type SortType =
+  | 'watched_at.desc'
+  | 'watched_at.asc'
+  | 'watchlisted_at.desc'
+  | 'watchlisted_at.asc'
+  | 'id.desc'
+  | 'id.asc'
+  | 'number_of_episodes.desc'
+  | 'number_of_episodes.asc'
+  | 'latest_watched.desc'
+  | 'latest_watched.asc'
+  | '';

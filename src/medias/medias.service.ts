@@ -46,7 +46,7 @@ export class MediasService {
     );
     return movieInfo;
   }
-
+  //
   async getMovieInfo(id: number) {
     const movieInfo = await lastValueFrom(
       from(

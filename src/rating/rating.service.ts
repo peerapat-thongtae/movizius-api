@@ -3,7 +3,7 @@ import axios from 'axios';
 import { chunk, last, orderBy, take } from 'lodash';
 import { tsvJSON } from '../shared/helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Imdb } from 'src/rating/schema/imdb.schema';
+import { Imdb } from '../rating/schema/imdb.schema';
 import { Model } from 'mongoose';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires

@@ -15,8 +15,8 @@ export interface MovieResp extends MovieResult, ReleaseDate {
 export interface MovieAccountState {
   id: number;
   media_type: string;
-  account_state_id: number;
+  account_state_id?: number;
   watchlisted_at: Date | null;
   watched_at: Date | null;
-  account_status: TodoStatusEnum;
+  account_status?: TodoStatusEnum;
 }

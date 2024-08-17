@@ -9,7 +9,6 @@ export class TVCron {
     private tvService: TvService,
   ) {}
 
-  @Cron('30 18 * * *')
   async updateTVInfo() {
     console.log('start');
     await this.tvService.updateTVInfo();

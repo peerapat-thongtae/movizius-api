@@ -5,7 +5,7 @@ import { MovieModule } from '../movie/movie.module';
 import { TvModule } from '../tv/tv.module';
 //
 @Module({
-  imports: [MovieModule, TvModule],
+  imports: [TvModule],
   controllers: [CronController],
   providers: [CronService],
 })

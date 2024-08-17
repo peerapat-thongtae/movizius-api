@@ -1,30 +1,35 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { maxBy, orderBy, sortBy } from 'lodash';
-import { Document, Types } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
+import { TodoStatusEnum } from '../../medias/enum/todo-status.enum';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const paginate = require('mongoose-paginate-v2');
 
 export type MediaUserDocument = MediaUser & Document;
 
-@Schema()
+@Schema({
+  toJSON: {
+    getters: true,
+    virtuals: true,
+  },
+})
 export class MediaUser {
   @Prop({ type: Number, index: true, required: true })
-  media_id: number;
+  id: number;
+
+  // @Prop({ type: Number, required: false, default: null })
+  // media_id: number | null;
 
   @Prop({ type: String, index: true, required: true })
   media_type: string;
 
-  @Prop({ type: String })
-  name: string;
-
   @Prop({ type: String, index: true, required: true })
   user_id: string;
 
-  @Prop({ type: Boolean, default: true })
-  watchlist: boolean;
+  // @Prop({ type: Boolean, default: true })
+  // watchlist: boolean;
 
-  @Prop({ type: Boolean, default: false })
-  watched: boolean;
+  // @Prop({ type: Boolean, default: false })
+  // watched: boolean;
 
   @Prop({ type: Types.Array, default: [] })
   episode_watched: {
@@ -55,33 +60,26 @@ export class MediaUser {
     required: false,
   })
   updated_at: Date;
+
+  account_status?: string;
 }
 
 export const MediaUserSchema = SchemaFactory.createForClass(MediaUser);
-MediaUserSchema.plugin(paginate);
-MediaUserSchema.index({ id: 1, media_type: 1, user_id: 1 }, { unique: true });
-MediaUserSchema.set('toJSON', {
-  transform: function (doc, ret) {
-    ret.id = ret._id;
-    delete ret._id;
-    ret.account_status = '';
-    ret.latest_watched = maxBy(ret.episode_watched, 'watched_at') || null;
-    if (ret.media_type === 'movie') {
-      if (ret.watchlist || ret.watched) {
-        ret.account_status = ret.watchlist
-          ? 'watchlist'
-          : ret.watched && 'watched';
+
+MediaUserSchema.virtual('account_status').get(function () {
+  if (this.media_type === 'movie') {
+    if (this.watchlisted_at || this.watched_at) {
+      if (this.watched_at) {
+        return 'watched';
       }
-    } else {
-      if (ret.number_of_episodes === ret.episode_watched.length) {
-        ret.account_status = 'watched';
-      } else if (ret.episode_watched.length > 0) {
-        ret.account_status = 'watching';
-      } else {
-        ret.account_status = 'watchlist';
+      if (this.watchlisted_at && !this.watched_at) {
+        return 'watchlist';
       }
     }
-    // delete ret.user_id;
-    delete ret.__v;
-  },
+  } else {
+  }
+  return '';
 });
+
+MediaUserSchema.plugin(paginate);
+MediaUserSchema.index({ id: 1, media_type: 1, user_id: 1 }, { unique: true });

@@ -6,7 +6,7 @@ export class CronController {
   constructor(private readonly cronService: CronService) {}
 
   @Get('/rating/update')
-  updateMovieStatus() {
+  updateStatus() {
     //
   }
 }

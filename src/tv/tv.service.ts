@@ -1,56 +1,69 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import * as json from 'test.media.json';
-import { InjectRepository } from '@nestjs/typeorm';
 import { TMDBService } from '../medias/tmdb.service';
 import { RatingService } from '../rating/rating.service';
-import { TV } from '../tv/entities/tv.entity';
-import { In, Repository } from 'typeorm';
-import { TVUser } from '../tv/entities/tv_user.entity';
-import { ceil, uniq } from 'lodash';
-import { lastValueFrom, forkJoin, catchError, map, from } from 'rxjs';
+import { ceil, first, uniq } from 'lodash';
+import { lastValueFrom, map, from } from 'rxjs';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
-import { FilterMovieRequest } from '../movie/dto/filter-movie.dto';
 import { CreateTvDto } from '../tv/dto/create-tv.dto';
-import { TVQueryBuilder } from '../tv/tv.query';
-import { ITVAccountState } from '../tv/types/TV.type';
+import { ITVAccountState, SortType } from '../tv/types/TV.type';
 import { UpdateTVEpisodeDto } from '../tv/dto/create-tv.dto';
 import { DiscoverTvRequest } from 'moviedb-promise';
 import { languages } from '../medias/constraints/tmdb.constraint';
 import { MediasService } from '../medias/medias.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, PipelineStage } from 'mongoose';
+import { TV } from '../tv/schema/tv.schema';
+import { TVUser } from '../tv/schema/tv_user.schema';
+import { TVRepository } from '../tv/tv.repository';
 
 @Injectable()
 export class TvService {
+  private media_type = 'tv';
   constructor(
-    @InjectRepository(TV)
-    private tvRepository: Repository<TV>,
+    // @InjectRepository(TV)
+    // private tvRepository: Repository<TV>,
 
-    @InjectRepository(TVUser)
-    private tvUserRepository: Repository<TVUser>,
+    // @InjectRepository(TVUser)
+    // private tvUserRepository: Repository<TVUser>,
+
+    // @InjectModel(Media.name)
+    // private tvModel: Model<Media>,
+
+    // @InjectModel(MediaUser.name)
+    // private tvUserModel: Model<MediaUser>,
+
+    @InjectModel(TV.name)
+    private tvModel: Model<TV>,
+
+    @Inject(TVRepository)
+    private tvRepository: TVRepository,
+
+    @InjectModel(TVUser.name)
+    private tvUserModel: Model<TVUser>,
 
     private tmdbService: TMDBService,
     private mediaService: MediasService,
 
-    @Inject(TVQueryBuilder)
-    private tvQueryBuilder: TVQueryBuilder,
+    // @Inject(TVQueryBuilder)
+    // private tvQueryBuilder: TVQueryBuilder,
 
     @Inject(forwardRef(() => RatingService))
     private ratingService: RatingService,
   ) {}
 
   async updateTVInfo() {
-    const k = await this.tvRepository.find({});
-
-    const datas = [];
+    const k = await this.tvModel.find({});
     const tmdbs = await Promise.all(
       k.map((data) => this.mediaService.getTVInfo(data.id)),
     );
     for (const tmdb of tmdbs) {
       const findRating = await this.ratingService.findByImdbId(tmdb.imdb_id);
-      const created = this.tvRepository.create({
+      await this.tvModel.updateOne({
         id: tmdb.id,
         number_of_episodes: tmdb.number_of_episodes,
         number_of_seasons: tmdb.number_of_seasons,
         title: tmdb.name,
+        media_type: this.media_type,
         is_anime:
           tmdb.original_language === 'ja' &&
           tmdb.genres.find((genre) => genre.id === 16)
@@ -59,18 +72,16 @@ export class TvService {
         vote_average: findRating?.vote_average || tmdb.vote_average,
         vote_count: findRating?.vote_count || tmdb.vote_count,
       });
-
-      datas.push(created);
     }
-    await this.tvRepository.save(datas);
     return 1;
   }
-
-  async createOrGetTV(tv_id: number) {
-    const tmdb = await this.mediaService.getTVInfo(tv_id);
+  async createOrGet(id: number) {
+    const tmdb = await this.mediaService.getTVInfo(id);
     const rating = await this.ratingService.findByImdbId(tmdb.imdb_id);
-    await this.tvRepository.upsert(
-      {
+    const foundMedia = await this.tvModel.findOne({ id });
+    if (!foundMedia) {
+      await this.tvModel.create({
+        media_type: this.media_type,
         id: tmdb.id,
         number_of_episodes: tmdb.number_of_episodes,
         number_of_seasons: tmdb.number_of_seasons,
@@ -83,29 +94,47 @@ export class TvService {
           tmdb.genres.find((genre) => genre.id === 16)
             ? true
             : false,
-      },
-      ['id'],
-    );
-
-    return this.findOne({ id: tv_id });
+      });
+    } else {
+      await this.tvModel.updateOne(
+        { id },
+        {
+          id: tmdb.id,
+          media_type: this.media_type,
+          number_of_episodes: tmdb.number_of_episodes,
+          number_of_seasons: tmdb.number_of_seasons,
+          release_date: tmdb.first_air_date,
+          title: tmdb.name,
+          vote_average: rating?.vote_average || tmdb.vote_average,
+          vote_count: rating?.vote_count || tmdb.vote_count,
+          is_anime:
+            tmdb.original_language === 'ja' &&
+            tmdb.genres.find((genre) => genre.id === 16)
+              ? true
+              : false,
+        },
+      );
+    }
+    return this.findOne({ id });
   }
 
-  async updateTVStatus(payload: CreateTvDto & { user_id: string }) {
-    await this.createOrGetTV(payload.id);
-    const foundState = await this.findOne({
+  async updateStatus(payload: CreateTvDto & { user_id: string }) {
+    await this.createOrGet(payload.id);
+    const foundState = await this.tvUserModel.findOne({
       id: payload.id,
+      // media_type: this.media_type,
       user_id: payload.user_id,
     });
 
-    const tvCreatePayload = this.tvUserRepository.create({
-      tv: { id: payload.id },
+    const tvCreatePayload = {
+      id: payload.id,
       user_id: payload.user_id,
       watchlisted_at: new Date(),
       episode_watched: [],
-    });
+    };
     if (!foundState) {
       if (payload.status === TodoStatusEnum.WATCHLIST) {
-        await this.tvUserRepository.save(tvCreatePayload);
+        await this.tvUserModel.create(tvCreatePayload);
       }
 
       if (payload.status === TodoStatusEnum.WATCHED) {
@@ -120,7 +149,7 @@ export class TvService {
             watched_at: new Date(),
           };
         });
-        await this.tvUserRepository.save(tvCreatePayload);
+        await this.tvUserModel.create(tvCreatePayload);
       }
     } else {
       if (payload.status === TodoStatusEnum.WATCHED) {
@@ -133,15 +162,19 @@ export class TvService {
   async updateTVEpisodeStatus(
     payload: UpdateTVEpisodeDto & { user_id: string },
   ) {
-    const foundTV = await this.createOrGetTV(payload.id);
+    await this.createOrGet(payload.id);
+    const foundTV = await this.tvUserModel.findOne({
+      id: payload.id,
+      user_id: payload.user_id,
+    });
 
-    if (!foundTV.account_state_id) {
-      const tvUser = this.tvUserRepository.create({
-        tv: { id: payload.id },
+    if (!foundTV) {
+      const tvUser = {
+        id: payload.id,
         user_id: payload.user_id,
         episode_watched: payload.episodes,
-      });
-      await this.tvUserRepository.save(tvUser);
+      };
+      await this.tvUserModel.create(tvUser);
     } else {
       for (const episode of payload.episodes) {
         const foundEpisodeWatched = foundTV.episode_watched.find(
@@ -169,138 +202,122 @@ export class TvService {
           });
         }
 
-        await this.tvUserRepository.update(foundTV.account_state_id, {
-          episode_watched: episodePayload,
-        });
+        await this.tvUserModel.updateOne(
+          {
+            id: payload.id,
+            user_id: payload.user_id,
+            media_type: this.media_type,
+          },
+          {
+            episode_watched: episodePayload,
+          },
+        );
       }
     }
-
     return this.findOne({ id: payload.id, user_id: payload.user_id });
   }
 
-  async findOne(payload: {
-    id: number;
-    user_id?: string;
-  }): Promise<ITVAccountState> {
-    const tv = this.tvQueryBuilder.queryTV();
-    tv.andWhere('tv.id = :id', { id: payload.id });
-
-    if (payload.user_id) {
-      tv.andWhere('tv_user.user_id = :user_id', { user_id: payload.user_id });
-    }
-    const tvData = await tv.getRawOne<ITVAccountState>();
-    return tvData;
+  async findOne(payload: { id: number; user_id?: string }): Promise<any> {
+    const query = this.tvRepository.query({
+      id: payload.id,
+      user_id: payload.user_id,
+    });
+    const resp = await this.tvUserModel.aggregate(query);
+    return first(resp);
   }
 
   async getAllStates(payload: { user_id?: string }) {
-    const qb = this.tvQueryBuilder.queryTV();
+    const accountStatus = (ret: any) => {
+      if (ret.number_of_episodes === ret.episode_watched.length) {
+        return 'watched';
+      } else if (ret.episode_watched.length > 0) {
+        return 'watching';
+      } else {
+        return 'watchlist';
+      }
+    };
+    const tvData = await this.tvModel.find({ media_type: this.media_type });
+    const tvUserData = await this.tvUserModel.find({
+      media_type: this.media_type,
+      user_id: payload.user_id,
+    });
 
-    if (payload.user_id) {
-      qb.andWhere('tv_user.user_id = :user_id', { user_id: payload.user_id });
+    const results = [];
+    for (const tvUser of tvUserData) {
+      const tv = tvData.find((val) => val.id === tvUser.id);
+      results.push({
+        ...tvUser.toJSON(),
+        ...tv.toJSON(),
+        account_status: accountStatus({
+          number_of_episodes: tv.number_of_episodes,
+          episode_watched: tvUser.episode_watched,
+        }),
+      });
     }
-
-    const tvData = await qb.getRawMany<ITVAccountState[]>();
-    return tvData;
+    return results;
   }
 
-  async paginateTVByStatus(
-    payload: FilterMovieRequest & { user_id: string; is_anime?: boolean },
-  ) {
-    const qb = this.tvQueryBuilder.queryTV();
-
-    if (payload.status === TodoStatusEnum.WATCHLIST) {
-      qb.andWhere('jsonb_array_length(tv_user.episode_watched) = 0');
-      qb.orderBy('tv_user.watchlisted_at', 'DESC');
-    }
-
-    if (payload.status === TodoStatusEnum.WATCHING) {
-      qb.andWhere(
-        'jsonb_array_length(tv_user.episode_watched) > 0 and jsonb_array_length(tv_user.episode_watched) < tv.number_of_episodes',
-      );
-      qb.orderBy(`sqb.latest_watched`, 'DESC');
-    }
-
-    if (payload.is_anime !== undefined) {
-      qb.andWhere('tv.is_anime = :is_anime', { is_anime: payload.is_anime });
-    }
-
-    if (payload.status === TodoStatusEnum.WATCHED) {
-      qb.andWhere(
-        'jsonb_array_length(tv_user.episode_watched) = tv.number_of_episodes',
-      );
-      qb.orderBy(`sqb.latest_watched`, 'DESC');
-    }
-
-    qb.addOrderBy('tv.id', 'DESC');
-
-    if (payload.user_id) {
-      qb.andWhere('tv_user.user_id = :user_id', { user_id: payload.user_id });
-    }
-
-    const total_results = await qb.clone().getCount();
-
-    // Pagination
-    const page = payload.page || 1;
-    const limit = payload?.limit || 20;
+  async paginateTVByStatus({
+    user_id,
+    page,
+    status,
+    sort_by,
+  }: {
+    user_id: string;
+    page: number;
+    status: TodoStatusEnum;
+    sort_by?: SortType;
+  }) {
+    const limit = 20;
     const skip = limit * (page - 1);
-    qb.limit(limit).offset(skip);
 
-    const tvUserDatas = await qb.getRawMany();
+    let sort: SortType = '';
+    if (!sort_by) {
+      if (status === 'watchlist') {
+        sort = 'watchlisted_at.desc';
+      } else {
+        sort = 'latest_watched.desc';
+      }
+    }
+    const query = this.tvRepository.query({
+      user_id,
+      status,
+      sort_by: sort,
+    });
+    const paginatationQuery: PipelineStage[] = [
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ];
+    const totalQuery = await this.tvUserModel.aggregate(query);
+    const filter: TV[] = await this.tvUserModel.aggregate([
+      ...query,
+      ...paginatationQuery,
+    ]);
 
-    const results =
-      tvUserDatas.length > 0
-        ? await lastValueFrom(
-            forkJoin(
-              tvUserDatas.map((val) => {
-                return this.mediaService.getTVInfo(val.id);
-              }),
-            ).pipe(
-              catchError(() => []),
-              map(async (tmdbs) => {
-                const imdbs = payload.with_imdb_rating
-                  ? await this.ratingService.findByImdbIds(
-                      tmdbs.map((val) => val.imdb_id),
-                    )
-                  : [];
-                return tmdbs.map((val) => {
-                  const findAccountState = tvUserDatas.find(
-                    (state) => state.id === val.id,
-                  );
-                  return {
-                    account_state: findAccountState
-                      ? {
-                          id: findAccountState.account_state_id,
-                          media_type: 'tv',
-                          number_of_episodes:
-                            findAccountState.number_of_episodes,
-                          number_of_seasons: findAccountState.number_of_seasons,
-                          watchlisted_at: findAccountState.watchlisted_at,
-                          watched_at: findAccountState.watched_at,
-                          count_watched: findAccountState.count_watched,
-                          latest_watched: findAccountState.latest_watched,
-                          account_status: findAccountState.account_status,
-                        }
-                      : null,
-                    is_anime: findAccountState.is_anime,
-                    account_status: findAccountState?.account_status || '',
-                    ...val,
-                    vote_average:
-                      imdbs.find((imdb) => imdb.imdb_id === val.imdb_id)
-                        ?.vote_average || val.vote_average,
-                    vote_count:
-                      imdbs.find((imdb) => imdb.imdb_id === val.imdb_id)
-                        ?.vote_count || val.vote_count,
-                  };
-                });
-              }),
-            ),
-          )
-        : [];
+    const results = await Promise.all(
+      filter.map((val) =>
+        lastValueFrom(
+          from(this.mediaService.getTVInfo(val.id)).pipe(
+            map((tmdb) => {
+              return {
+                ...val,
+                ...tmdb,
+              };
+            }),
+          ),
+        ),
+      ),
+    );
+
     return {
-      page,
-      total_results: total_results,
-      total_pages: ceil(total_results / limit),
+      page: +page,
       results: results,
+      total_results: totalQuery.length,
+      total_pages: ceil(totalQuery.length / limit),
     };
   }
 
@@ -341,5 +358,11 @@ export class TvService {
 
     tvs.results = tvFullDetails;
     return tvs;
+  }
+
+  async test() {
+    return this.tvRepository.findMany({
+      status: 'watching',
+    });
   }
 }

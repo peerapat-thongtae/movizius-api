@@ -12,7 +12,6 @@ import { Rating } from '../rating/entities/rating.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
-        console.log(configService.get('NODE_ENV'));
         return {
           type: 'postgres',
           host: configService.get('POSTGRES_HOST'),

@@ -22,13 +22,13 @@ export class RatingService {
   }
 
   async findByImdbIds(imdb_ids: string[]): Promise<any[]> {
-    const res = await this.ratingModel.find({ ids: imdb_ids });
+    const res = await this.ratingModel.find();
     if (!res) {
       return null;
     }
     const ratings = [];
     for (const imdbData of res) {
-      const ratingData = imdbData.ratings;
+      const ratingData = JSON.parse(imdbData.ratings);
       const filterImdb = ratingData.filter((val) =>
         imdb_ids.includes(val.imdb_id),
       );
@@ -38,11 +38,11 @@ export class RatingService {
   }
 
   async findByImdbId(imdb_id: string): Promise<any> {
-    const res = await this.ratingModel.findOne({ ids: imdb_id });
+    const res = await this.ratingModel.findOne();
     if (!res) {
       return null;
     }
-    const ratings = res.ratings;
+    const ratings = JSON.parse(res.ratings);
     const findImdb = ratings.find((val) => val.imdb_id === imdb_id);
     if (!findImdb) {
       return null;
@@ -93,13 +93,13 @@ export class RatingService {
     const sortDatas = orderBy(datas, 'votes', 'desc');
     const newa = chunk(sortDatas, 1500);
 
-    await this.ratingModel.create(
+    await this.ratingModel.insertMany(
       newa.map((val) => {
         return {
-          ids: val.map((data) => data.imdb_id),
-          ratings: val,
-          max_id: last(val)?.imdb_id,
-          updated_at: new Date(),
+          // ids: val.map((data) => data.imdb_id),
+          ratings: JSON.stringify(val),
+          // max_id: last(val)?.imdb_id,
+          // updated_at: new Date(),
         };
       }),
     );

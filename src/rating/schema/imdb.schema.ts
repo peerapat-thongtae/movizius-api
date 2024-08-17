@@ -8,12 +8,12 @@ export type ImdbDocument = Imdb & Document;
 @Schema()
 export class Imdb {
   @Prop({ type: Object })
-  ratings: any[];
+  ratings: any;
 
-  @Prop({ type: Types.Array, default: [], index: true })
+  @Prop({ type: Types.Array, default: [] })
   ids: string[];
 
-  @Prop({ type: String, index: true })
+  @Prop({ type: String })
   max_id: string;
 
   @Prop({

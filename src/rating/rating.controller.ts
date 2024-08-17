@@ -27,4 +27,10 @@ export class RatingController {
   getRatings(@Body('ids') ids: string[]) {
     return this.ratingService.findByImdbIds(ids);
   }
+
+  // --------- Cron ----------
+  @Get('/cron/update-ratin')
+  updateRating() {
+    return this.ratingCronService.updateIMDBDetail();
+  }
 }

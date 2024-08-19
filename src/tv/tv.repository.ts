@@ -13,6 +13,7 @@ interface TVQueryPayload {
   page?: number;
   limit?: number;
   sort_by?: SortType;
+  is_anime?: boolean;
 }
 @Injectable()
 export class TVRepository {
@@ -58,6 +59,7 @@ export class TVRepository {
         user_id: 1,
         name: '$tv.name',
         media_type: 'tv',
+        is_anime: 1,
         number_of_episodes: '$tv.number_of_episodes',
         number_of_seasons: '$tv.number_of_seasons',
         episode_watched: 1,
@@ -89,6 +91,10 @@ export class TVRepository {
       matchQuery.push({ account_status: payload.status.toString() });
     }
 
+    if (payload?.is_anime) {
+      matchQuery.push({ is_anime: payload.is_anime });
+    }
+
     if (matchQuery.length > 0) {
       pipeline.push({ $match: { $and: matchQuery } });
     }
@@ -118,7 +124,7 @@ export class TVRepository {
   }
   async findOne(payload?: TVQueryPayload) {
     const resp = await this.tvUserModel.aggregate(this.query(payload));
-    return _.first(resp);
+    return _.first(resp) || null;
   }
 
   async findMany(payload?: TVQueryPayload) {

@@ -127,9 +127,12 @@ export class TvService {
 
   async updateStatus(payload: CreateTvDto & { user_id: string }) {
     await this.createOrGet(payload.id);
-    const foundState = await this.tvUserModel.findOne({
+    // const foundState = await this.tvUserModel.findOne({
+    //   id: payload.id,
+    //   user_id: payload.user_id,
+    // });
+    const foundState = await this.tvRepository.findOne({
       id: payload.id,
-      // media_type: this.media_type,
       user_id: payload.user_id,
     });
 
@@ -170,7 +173,7 @@ export class TvService {
     payload: UpdateTVEpisodeDto & { user_id: string },
   ) {
     await this.createOrGet(payload.id);
-    const foundTV = await this.tvUserModel.findOne({
+    const foundTV = await this.tvRepository.findOne({
       id: payload.id,
       user_id: payload.user_id,
     });
@@ -230,38 +233,12 @@ export class TvService {
       user_id: payload.user_id,
     });
     const resp = await this.tvUserModel.aggregate(query);
-    return first(resp);
+    return first(resp) || null;
   }
 
   async getAllStates(payload: { user_id?: string }) {
-    const accountStatus = (ret: any) => {
-      if (ret.number_of_episodes === ret.episode_watched.length) {
-        return 'watched';
-      } else if (ret.episode_watched.length > 0) {
-        return 'watching';
-      } else {
-        return 'watchlist';
-      }
-    };
-    const tvData = await this.tvModel.find({ media_type: this.media_type });
-    const tvUserData = await this.tvUserModel.find({
-      media_type: this.media_type,
-      user_id: payload.user_id,
-    });
-
-    const results = [];
-    for (const tvUser of tvUserData) {
-      const tv = tvData.find((val) => val.id === tvUser.id);
-      results.push({
-        ...tvUser.toJSON(),
-        ...tv.toJSON(),
-        account_status: accountStatus({
-          number_of_episodes: tv.number_of_episodes,
-          episode_watched: tvUser.episode_watched,
-        }),
-      });
-    }
-    return results;
+    const query = this.tvRepository.query({ user_id: payload.user_id });
+    return this.tvUserModel.aggregate(query);
   }
 
   async paginateTVByStatus({
@@ -274,6 +251,7 @@ export class TvService {
     page: number;
     status: TodoStatusEnum;
     sort_by?: SortType;
+    is_anime?: boolean;
   }) {
     const limit = 20;
     const skip = limit * (page - 1);

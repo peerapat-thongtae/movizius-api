@@ -160,7 +160,7 @@ export class RatingService {
           ratings: JSON.stringify(val),
           min_id: first(val)?.imdb_id,
           max_id: last(val)?.imdb_id,
-          // updated_at: new Date(),
+          updated_at: new Date(),
         };
       }),
     );

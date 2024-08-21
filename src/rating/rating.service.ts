@@ -11,6 +11,7 @@ import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class RatingService {
+  private fileJSON = [];
   constructor(
     @InjectModel(Imdb.name)
     private ratingModel: Model<Imdb>,
@@ -97,7 +98,8 @@ export class RatingService {
     });
 
     const resJSON = tsvJSON(buffer.toString());
-    fs.writeFileSync('rating.json', JSON.stringify(resJSON));
+    // fs.writeFileSync('rating.json', JSON.stringify(resJSON));
+    this.fileJSON = resJSON;
     const end = performance.now();
     return new Date(end - start).getSeconds();
   }
@@ -126,11 +128,12 @@ export class RatingService {
     //     }
     //   });
     // });
-    if (!fs.existsSync('rating.json')) {
-      return 'not file';
-    }
-    const file = fs.readFileSync('rating.json', { encoding: 'utf-8' });
-    const resJSON = file ? JSON.parse(file) : [];
+    // if (!fs.existsSync('rating.json')) {
+    //   return 'not file';
+    // }
+    // const file = fs.readFileSync('rating.json', { encoding: 'utf-8' });
+    // const resJSON = file ? JSON.parse(file) : [];
+    const resJSON = this.fileJSON;
 
     if (!resJSON || resJSON.length === 0) {
       return 'no file';
@@ -162,7 +165,8 @@ export class RatingService {
       }),
     );
 
-    fs.unlinkSync('rating.json');
+    // fs.unlinkSync('rating.json');
+    this.fileJSON = [];
     const end = performance.now();
     // console.log('end imdb', new Date(end - start).getSeconds());
     return new Date(end - start).getSeconds();

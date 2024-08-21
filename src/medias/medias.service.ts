@@ -20,7 +20,7 @@ export class MediasService {
         this.tmdbService.tvInfo({
           id: tvId,
           append_to_response:
-            'credits,account_states,external_ids,casts,crew,belongs_to_collection,watch_providers,watch-providers,videos,release_dates,watch/providers',
+            'credits,account_states,external_ids,belongs_to_collection,watch_providers,watch-providers,videos,release_dates,watch/providers',
         }),
       ).pipe(
         // Get Rating

@@ -71,8 +71,7 @@ export class RatingService {
     return findImdb;
   }
 
-  async updateIMDBDetail() {
-    console.log('start imdb');
+  async downloadFileRating() {
     const start = performance.now();
     const res = await axios.get(
       'https://datasets.imdbws.com/title.ratings.tsv.gz',
@@ -98,6 +97,44 @@ export class RatingService {
     });
 
     const resJSON = tsvJSON(buffer.toString());
+    fs.writeFileSync('rating.json', JSON.stringify(resJSON));
+    const end = performance.now();
+    return new Date(end - start).getSeconds();
+  }
+  async updateIMDBDetail() {
+    // console.log('start imdb');
+    const start = performance.now();
+    // const res = await axios.get(
+    //   'https://datasets.imdbws.com/title.ratings.tsv.gz',
+    //   {
+    //     responseType: 'arraybuffer', // Important
+    //     headers: {
+    //       'Content-Type': 'application/gzip',
+    //     },
+    //   },
+    // );
+
+    // // Calling gunzip method
+    // // await zlib.gunzip(res.data, async (err, buffer) => {});
+
+    // const buffer = await new Promise((resolve, reject) => {
+    //   zlib.gunzip(res.data, (err, buffer) => {
+    //     if (err) {
+    //       reject(err);
+    //     } else {
+    //       resolve(buffer);
+    //     }
+    //   });
+    // });
+    if (!fs.existsSync('rating.json')) {
+      return 'not file';
+    }
+    const file = fs.readFileSync('rating.json', { encoding: 'utf-8' });
+    const resJSON = file ? JSON.parse(file) : [];
+
+    if (!resJSON || resJSON.length === 0) {
+      return 'no file';
+    }
     const datas = resJSON
       .map((imdbData) => {
         return {
@@ -113,7 +150,6 @@ export class RatingService {
 
     const sortDatas = orderBy(datas, 'votes', 'desc');
     const newa = chunk(sortDatas, 1500);
-
     await this.ratingModel.insertMany(
       newa.map((val) => {
         return {
@@ -125,8 +161,10 @@ export class RatingService {
         };
       }),
     );
+
+    fs.unlinkSync('rating.json');
     const end = performance.now();
-    console.log('end imdb', new Date(end - start).getSeconds());
-    return 9;
+    // console.log('end imdb', new Date(end - start).getSeconds());
+    return new Date(end - start).getSeconds();
   }
 }

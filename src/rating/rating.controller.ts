@@ -33,4 +33,9 @@ export class RatingController {
   updateRating() {
     return this.ratingCronService.updateIMDBDetail();
   }
+
+  @Get('/cron/download-rating')
+  downloadFileRating() {
+    return this.ratingService.downloadFileRating();
+  }
 }

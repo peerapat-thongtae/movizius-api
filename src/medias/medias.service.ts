@@ -6,6 +6,7 @@ import * as _ from 'lodash';
 import { EpisodeResult, TvSeasonResponse } from 'moviedb-promise';
 import { from, lastValueFrom, map } from 'rxjs';
 import { RatingService } from '../rating/rating.service';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class MediasService {
@@ -151,5 +152,68 @@ export class MediasService {
       }
     }
     return episodes;
+  }
+
+  async getTVAiringAll(date?: Date | string) {
+    const dateParam = dayjs().format('YYYY-MM-DD');
+    const params: any = {
+      'air_date.gte': dateParam,
+      'air_date.lte': dateParam,
+      sort_by: 'popularity.desc',
+      // 'with_watch_providers': config.watchProviders.map(val => val.provider_id).join('|'),
+      // 'region': 'TH',
+      // 'timezone': 'Asia/Bangkok',
+      // 'watch_region': 'TH',
+      page: 1,
+    };
+    const resp = await this.tmdbService.discoverTv(params);
+    const medias = resp.results || [];
+    if (resp.total_pages > 1) {
+      for (let page = 2; page <= resp.total_pages; page++) {
+        const respPage = await this.tmdbService.tvAiringToday({
+          ...params,
+          page: page,
+        });
+        medias.push(...respPage.results);
+      }
+    }
+    return {
+      page: 1,
+      total_pages: 1,
+      results: medias,
+      total_results: medias.length,
+    };
+  }
+
+  async getMovieByDate() {
+    const dateParam = dayjs().format('YYYY-MM-DD');
+    const params: any = {
+      'release_date.gte': dateParam,
+      'release_date.lte': dateParam,
+      sort_by: 'popularity.desc',
+      // 'with_watch_providers': config.watchProviders.map(val => val.provider_id).join('|'),
+      region: 'TH',
+      // 'timezone': 'Asia/Bangkok',
+      watch_region: 'TH',
+      page: 1,
+    };
+    const resp = await this.tmdbService.discoverMovie(params);
+
+    const medias = resp.results || [];
+    if (resp.total_pages > 1) {
+      for (let page = 2; page <= resp.total_pages; page++) {
+        const respPage = await this.tmdbService.discoverMovie({
+          ...params,
+          page: page,
+        });
+        medias.push(...respPage.results);
+      }
+    }
+    return {
+      page: 1,
+      total_pages: 1,
+      results: medias,
+      total_results: medias.length,
+    };
   }
 }

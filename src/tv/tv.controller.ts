@@ -76,6 +76,11 @@ export class TvController {
     return this.tvService.discoverTV(query);
   }
 
+  @Get('airing-today')
+  getTodayTVAiring() {
+    return this.mediaService.getTVAiringAll();
+  }
+
   @Get('/:id')
   getTVDetail(@Param('id') id: number) {
     return this.mediaService.getTVInfo(id);

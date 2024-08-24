@@ -24,6 +24,7 @@ import { MongoModule } from './databases/mongo.module';
     ScheduleModule.forRoot(),
     PostgresModule,
     MongoModule,
+    CronModule,
     // MongooseModule.forRootAsync({
     //   imports: [ConfigModule],
     //   inject: [ConfigService],

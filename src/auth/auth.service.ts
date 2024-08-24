@@ -11,13 +11,28 @@ export class AuthService {
     clientId: process.env.AUTH0_CLIENT_ID,
     clientSecret: process.env.AUTH0_CLIENT_SECRET,
   });
-  constructor() {}
+  constructor() {
+    this.management = new ManagementClient({
+      domain: process.env.AUTH0_DOMAIN1,
+      clientId: process.env.AUTH0_CLIENT_ID,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    });
+  }
   create(_createAuthDto: CreateAuthDto) {
     return 'This action adds a new auth';
   }
 
-  findAll() {
-    return this.management.users.getAll();
+  async findAll() {
+    const resp = await this.management.users.getAll();
+    return resp.data;
+  }
+
+  async findUserHasLineProvider() {
+    const resp = await this.management.users.getAll();
+    const lineUsers = resp.data.filter((val) =>
+      val.identities.find((iden) => iden.provider === 'line'),
+    );
+    return lineUsers;
   }
 
   async findByLineId(lineId: string) {

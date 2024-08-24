@@ -6,7 +6,6 @@ import { slice } from 'lodash';
 import { MediaTypeEnum } from '../medias/enum/media-type.enum';
 import { MediasService } from '../medias/medias.service';
 import { TMDBService } from '../medias/tmdb.service';
-import dayjs from 'dayjs';
 import { carouselMessage, IMovieLineCard } from './helpers/line-flex.helper';
 import LineClient from './line.config';
 

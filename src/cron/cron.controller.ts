@@ -5,7 +5,7 @@ import { TvService } from '../tv/tv.service';
 import { MediasService } from '../medias/medias.service';
 import { AuthService } from '../auth/auth.service';
 import { LineService } from '../line/line.service';
-import { format } from 'date-fns';
+import { format, formatInTimeZone } from 'date-fns-tz';
 
 @Controller('cron')
 export class CronController {
@@ -41,7 +41,7 @@ export class CronController {
         );
         const todayDetailStates = await Promise.all(promises);
 
-        let message = `TV Series or Anime Airing Today ${format(new Date(), 'dd-MM-yyyy')} : \r\n \r\n`;
+        let message = `TV Series or Anime Airing Today ${formatInTimeZone(new Date(), 'Asia/Bangkok', 'dd-MM-yyyy')} : \r\n \r\n`;
         for (const tv of todayDetailStates) {
           message += `  -  ${tv.name} Season ${tv?.next_episode_to_air.season_number} EP. ${tv?.next_episode_to_air.episode_number}\r\n`;
         }
@@ -83,7 +83,7 @@ export class CronController {
         if (todayDetailStates.length === 0) {
           return todayDetailStates;
         }
-        let message = `Movies Airing Today ${format(new Date(), 'dd-MM-yyyy')} : \r\n \r\n`;
+        let message = `Movies Airing Today ${formatInTimeZone(new Date(), 'Asia/Bangkok', 'dd-MM-yyyy')} : \r\n \r\n`;
         for (const movie of todayDetailStates) {
           message += `  -  ${movie.title} \r\n`;
         }

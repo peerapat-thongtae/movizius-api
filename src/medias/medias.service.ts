@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 import { EpisodeResult, TvSeasonResponse } from 'moviedb-promise';
 import { from, lastValueFrom, map } from 'rxjs';
 import { RatingService } from '../rating/rating.service';
-import { format } from 'date-fns';
+import { format, formatInTimeZone } from 'date-fns-tz';
 
 @Injectable()
 export class MediasService {
@@ -155,7 +155,11 @@ export class MediasService {
   }
 
   async getTVAiringAll(date?: Date | string) {
-    const dateParam = format(new Date(), 'yyyy-MM-dd');
+    const dateParam = formatInTimeZone(
+      new Date(),
+      'Asia/Bangkok',
+      'yyyy-MM-dd',
+    );
     const params: any = {
       'air_date.gte': dateParam,
       'air_date.lte': dateParam,
@@ -186,7 +190,11 @@ export class MediasService {
   }
 
   async getMovieByDate() {
-    const dateParam = format(new Date(), 'yyyy-MM-dd');
+    const dateParam = formatInTimeZone(
+      new Date(),
+      'Asia/Bangkok',
+      'yyyy-MM-dd',
+    );
     const params: any = {
       'release_date.gte': dateParam,
       'release_date.lte': dateParam,

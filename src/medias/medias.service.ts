@@ -155,7 +155,7 @@ export class MediasService {
   }
 
   async getTVAiringAll(date?: Date | string) {
-    const dateParam = format(new Date(), 'YYYY-MM-DD');
+    const dateParam = format(new Date(), 'yyyy-MM-dd');
     const params: any = {
       'air_date.gte': dateParam,
       'air_date.lte': dateParam,
@@ -186,7 +186,7 @@ export class MediasService {
   }
 
   async getMovieByDate() {
-    const dateParam = format(new Date(), 'YYYY-MM-DD');
+    const dateParam = format(new Date(), 'yyyy-MM-dd');
     const params: any = {
       'release_date.gte': dateParam,
       'release_date.lte': dateParam,

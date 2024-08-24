@@ -19,41 +19,45 @@ export class CronController {
 
   @Get('/tv-air-today')
   async sendTVAirToday() {
-    const users = await this.authService.findUserHasLineProvider();
-    const todayShows = await this.mediaService.getTVAiringAll();
+    try {
+      const users = await this.authService.findUserHasLineProvider();
+      const todayShows = await this.mediaService.getTVAiringAll();
 
-    for (const user of users) {
-      const lineId = user.identities.find(
-        (val) => val.provider === 'line',
-      )?.user_id;
+      for (const user of users) {
+        const lineId = user.identities.find(
+          (val) => val.provider === 'line',
+        )?.user_id;
 
-      if (lineId) {
-        const findTVStates = await this.tvService.getAllStates({
-          user_id: user.user_id,
-        });
+        if (lineId) {
+          const findTVStates = await this.tvService.getAllStates({
+            user_id: user.user_id,
+          });
 
-        const todayWithStates = todayShows.results.filter((val) =>
-          findTVStates.map((val) => val.id).includes(val.id),
-        );
+          const todayWithStates = todayShows.results.filter((val) =>
+            findTVStates.map((val) => val.id).includes(val.id),
+          );
 
-        const promises = todayWithStates.map((val) =>
-          this.mediaService.getTVInfo(val.id),
-        );
-        const todayDetailStates = await Promise.all(promises);
+          const promises = todayWithStates.map((val) =>
+            this.mediaService.getTVInfo(val.id),
+          );
+          const todayDetailStates = await Promise.all(promises);
 
-        let message = `TV Series or Anime Airing Today ${dayjs().format('DD/MM/YYYY')} : \r\n \r\n`;
-        for (const tv of todayDetailStates) {
-          message += `  -  ${tv.name} Season ${tv?.next_episode_to_air.season_number} EP. ${tv?.next_episode_to_air.episode_number}\r\n`;
+          let message = `TV Series or Anime Airing Today ${dayjs().format('DD/MM/YYYY')} : \r\n \r\n`;
+          for (const tv of todayDetailStates) {
+            message += `  -  ${tv.name} Season ${tv?.next_episode_to_air.season_number} EP. ${tv?.next_episode_to_air.episode_number}\r\n`;
+          }
+
+          await this.lineService.pushMessage(lineId, {
+            type: 'text',
+            text: message,
+          });
+          return todayDetailStates;
         }
-
-        await this.lineService.pushMessage(lineId, {
-          type: 'text',
-          text: message,
-        });
-        return todayDetailStates;
       }
+      return todayShows.results.map((val) => val.name);
+    } catch (err) {
+      return err;
     }
-    return todayShows.results.map((val) => val.name);
   }
 
   @Get('/movie-air-today')

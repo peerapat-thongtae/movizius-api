@@ -5,7 +5,7 @@ import { TvService } from '../tv/tv.service';
 import { MediasService } from '../medias/medias.service';
 import { AuthService } from '../auth/auth.service';
 import { LineService } from '../line/line.service';
-import * as dayjs from 'dayjs';
+import * as datefns from 'date-fns';
 
 @Controller('cron')
 export class CronController {
@@ -19,48 +19,41 @@ export class CronController {
 
   @Get('/tv-air-today')
   async sendTVAirToday() {
-    try {
-      console.log('start');
-      const users = await this.authService.findUserHasLineProvider();
-      console.log('user', users);
-      const todayShows = await this.mediaService.getTVAiringAll();
+    const users = await this.authService.findUserHasLineProvider();
+    const todayShows = await this.mediaService.getTVAiringAll();
 
-      for (const user of users) {
-        const lineId = user.identities.find(
-          (val) => val.provider === 'line',
-        )?.user_id;
+    for (const user of users) {
+      const lineId = user.identities.find(
+        (val) => val.provider === 'line',
+      )?.user_id;
 
-        if (lineId) {
-          const findTVStates = await this.tvService.getAllStates({
-            user_id: user.user_id,
-          });
+      if (lineId) {
+        const findTVStates = await this.tvService.getAllStates({
+          user_id: user.user_id,
+        });
 
-          const todayWithStates = todayShows.results.filter((val) =>
-            findTVStates.map((val) => val.id).includes(val.id),
-          );
+        const todayWithStates = todayShows.results.filter((val) =>
+          findTVStates.map((val) => val.id).includes(val.id),
+        );
 
-          const promises = todayWithStates.map((val) =>
-            this.mediaService.getTVInfo(val.id),
-          );
-          const todayDetailStates = await Promise.all(promises);
+        const promises = todayWithStates.map((val) =>
+          this.mediaService.getTVInfo(val.id),
+        );
+        const todayDetailStates = await Promise.all(promises);
 
-          let message = `TV Series or Anime Airing Today ${dayjs().format('DD/MM/YYYY')} : \r\n \r\n`;
-          for (const tv of todayDetailStates) {
-            message += `  -  ${tv.name} Season ${tv?.next_episode_to_air.season_number} EP. ${tv?.next_episode_to_air.episode_number}\r\n`;
-          }
-
-          await this.lineService.pushMessage(lineId, {
-            type: 'text',
-            text: message,
-          });
-          return todayDetailStates;
+        let message = `TV Series or Anime Airing Today ${datefns.format(new Date(), 'YYYY-MM-DD')} : \r\n \r\n`;
+        for (const tv of todayDetailStates) {
+          message += `  -  ${tv.name} Season ${tv?.next_episode_to_air.season_number} EP. ${tv?.next_episode_to_air.episode_number}\r\n`;
         }
+
+        await this.lineService.pushMessage(lineId, {
+          type: 'text',
+          text: message,
+        });
+        return todayDetailStates;
       }
-      return todayShows.results.map((val) => val.name);
-    } catch (err) {
-      console.log(err);
-      return err;
     }
+    return todayShows.results.map((val) => val.name);
   }
 
   @Get('/movie-air-today')
@@ -90,7 +83,7 @@ export class CronController {
         if (todayDetailStates.length === 0) {
           return todayDetailStates;
         }
-        let message = `Movies Airing Today ${dayjs().format('DD/MM/YYYY')} : \r\n \r\n`;
+        let message = `Movies Airing Today ${datefns.format(new Date(), 'YYYY-MM-DD')} : \r\n \r\n`;
         for (const movie of todayDetailStates) {
           message += `  -  ${movie.title} \r\n`;
         }

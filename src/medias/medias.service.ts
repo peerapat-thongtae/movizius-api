@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 import { EpisodeResult, TvSeasonResponse } from 'moviedb-promise';
 import { from, lastValueFrom, map } from 'rxjs';
 import { RatingService } from '../rating/rating.service';
-import * as dayjs from 'dayjs';
+import * as datefns from 'date-fns';
 
 @Injectable()
 export class MediasService {
@@ -155,7 +155,7 @@ export class MediasService {
   }
 
   async getTVAiringAll(date?: Date | string) {
-    const dateParam = dayjs().format('YYYY-MM-DD');
+    const dateParam = datefns.format(new Date(), 'YYYY-MM-DD');
     const params: any = {
       'air_date.gte': dateParam,
       'air_date.lte': dateParam,
@@ -186,7 +186,7 @@ export class MediasService {
   }
 
   async getMovieByDate() {
-    const dateParam = dayjs().format('YYYY-MM-DD');
+    const dateParam = datefns.format(new Date(), 'YYYY-MM-DD');
     const params: any = {
       'release_date.gte': dateParam,
       'release_date.lte': dateParam,

@@ -20,7 +20,9 @@ export class CronController {
   @Get('/tv-air-today')
   async sendTVAirToday() {
     try {
+      console.log('start');
       const users = await this.authService.findUserHasLineProvider();
+      console.log('user', users);
       const todayShows = await this.mediaService.getTVAiringAll();
 
       for (const user of users) {
@@ -56,6 +58,7 @@ export class CronController {
       }
       return todayShows.results.map((val) => val.name);
     } catch (err) {
+      console.log(err);
       return err;
     }
   }

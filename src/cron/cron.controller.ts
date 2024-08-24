@@ -5,7 +5,7 @@ import { TvService } from '../tv/tv.service';
 import { MediasService } from '../medias/medias.service';
 import { AuthService } from '../auth/auth.service';
 import { LineService } from '../line/line.service';
-import * as datefns from 'date-fns';
+import datefns from 'date-fns';
 
 @Controller('cron')
 export class CronController {

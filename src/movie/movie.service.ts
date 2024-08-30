@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
-import { ceil } from 'lodash';
+import { ceil, omit, split } from 'lodash';
 import { FilterMovieRequest } from './dto/filter-movie.dto';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { TMDBService } from '../medias/tmdb.service';
@@ -10,9 +10,11 @@ import { MoviePaginationResponse } from '../movie/types/Movie.type';
 import { DiscoverMovieRequest } from 'moviedb-promise';
 import { MediasService } from '../medias/medias.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { Movie } from '../movie/schema/movie.schema';
 import { MovieUser } from '../movie/schema/movie_user.schema';
+import { MovieRepository } from '../movie/movie.repository';
+import { SortType } from '../tv/types/TV.type';
 
 @Injectable()
 export class MovieService {
@@ -32,6 +34,7 @@ export class MovieService {
 
     private mediaService: MediasService,
     private tmdbService: TMDBService,
+    private movieRepository: MovieRepository,
 
     @Inject(forwardRef(() => RatingService))
     private ratingService: RatingService,
@@ -39,6 +42,41 @@ export class MovieService {
     // private media_type: string = 'movie',
   ) {}
 
+  async updateMovieInfo() {
+    const now = new Date();
+    const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    const k = await this.movieModel.find(
+      {
+        updated_at: { $lt: twelveHoursAgo },
+      },
+      {},
+      { limit: 80 },
+    );
+
+    const tmdbs = await Promise.all(
+      k.map((data) => this.mediaService.getMovieInfo(data.id)),
+    );
+    for (const tmdb of tmdbs) {
+      await this.movieModel.updateOne(
+        { id: tmdb.id },
+        {
+          id: tmdb.id,
+          title: tmdb.title,
+          release_date: tmdb.release_date,
+          runtime: tmdb.runtime,
+          is_anime:
+            tmdb.original_language === 'ja' &&
+            tmdb.genres.find((genre) => genre.id === 16)
+              ? true
+              : false,
+          vote_average: tmdb?.vote_average,
+          vote_count: tmdb?.vote_count,
+          updated_at: new Date(),
+        },
+      );
+    }
+    return k.map((val) => val.id);
+  }
   async createOrGet(id: number) {
     const tmdb = await this.mediaService.getMovieInfo(id);
     const foundMedia = await this.movieModel.findOne({ id });
@@ -123,50 +161,30 @@ export class MovieService {
     const page = payload?.page || 1;
     const skip = 20 * (page - 1);
     const limit = 20;
-    const filterPayload: any = {
-      media_type: 'movie',
-    };
 
-    const sortPayload: any = {};
-
-    if (payload.user_id) {
-      filterPayload.user_id = payload.user_id;
-    }
-
-    if (payload.status === 'watchlist') {
-      filterPayload.watchlisted_at = { $ne: null };
-      filterPayload.watched_at = { $eq: null };
-    }
-
-    if (payload.status === 'watched') {
-      filterPayload.watched_at = { $ne: null };
-    }
-    const total_results = await this.movieUserModel
-      .find(filterPayload)
-      .countDocuments();
-
+    let sort: SortType = '';
     if (!payload.sort) {
-      if (payload.status === 'watched') {
-        sortPayload.watched_at = -1;
-      }
       if (payload.status === 'watchlist') {
-        sortPayload.watchlisted_at = -1;
+        sort = 'watchlisted_at.desc';
+      } else {
+        sort = 'watched_at.desc';
       }
+    } else {
+      sort = payload.sort;
     }
+    const payloadQuery = {
+      user_id: payload.user_id,
+      sort_by: sort,
+      status: payload.status,
+      page: page,
+    };
+    const query = this.movieRepository.query(payloadQuery);
+    const totalQuery = this.movieRepository.query(omit(payloadQuery, ['page']));
 
-    const resp = await this.movieUserModel.find(
-      filterPayload,
-      {},
-      {
-        skip: skip,
-        limit: limit,
-        sort: {
-          ...sortPayload,
-          id: -1,
-        },
-      },
-    );
+    const resp = await this.movieUserModel.aggregate(query);
 
+    const totalResp = await this.movieUserModel.aggregate(totalQuery);
+    const total_results = totalResp.length;
     const promises = [];
     for (const media of resp) {
       const movieDetail = this.mediaService.getMovieInfo(media.id);

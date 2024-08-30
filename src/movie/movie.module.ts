@@ -12,6 +12,7 @@ import { Media, MediaSchema } from '../medias/schema/medias.schema';
 import { MediaUser, MediaUserSchema } from '../medias/schema/media_user.schema';
 import { Movie, MovieSchema } from '../movie/schema/movie.schema';
 import { MovieUserSchema } from '../movie/schema/movie_user.schema';
+import { MovieRepository } from '../movie/movie.repository';
 
 @Module({
   imports: [
@@ -45,7 +46,7 @@ import { MovieUserSchema } from '../movie/schema/movie_user.schema';
     forwardRef(() => MediasModule),
   ],
   controllers: [MovieController],
-  providers: [MovieService, TMDBService],
-  exports: [MovieService, TMDBService],
+  providers: [MovieService, MovieRepository, TMDBService],
+  exports: [MovieService, MovieRepository, TMDBService],
 })
 export class MovieModule {}

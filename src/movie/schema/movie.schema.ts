@@ -16,6 +16,12 @@ export class Movie {
   @Prop({ type: String, default: 'movie' })
   media_type: string;
 
+  @Prop({ type: Date, nullable: true, required: false })
+  release_date: Date;
+
+  @Prop({ type: Number, nullable: true, required: false })
+  runtime: number;
+
   @Prop({ type: Boolean, default: false, index: true })
   is_anime: boolean;
 

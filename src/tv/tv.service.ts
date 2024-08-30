@@ -56,7 +56,7 @@ export class TvService {
     const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
     const k = await this.tvModel.find(
       {
-        updated_at: { $lte: twelveHoursAgo },
+        updated_at: { $lt: twelveHoursAgo },
       },
       {},
       { limit: 80 },
@@ -65,20 +65,23 @@ export class TvService {
       k.map((data) => this.mediaService.getTVInfo(data.id)),
     );
     for (const tmdb of tmdbs) {
-      await this.tvModel.updateOne({
-        id: tmdb.id,
-        number_of_episodes: tmdb.number_of_episodes,
-        number_of_seasons: tmdb.number_of_seasons,
-        name: tmdb.name,
-        is_anime:
-          tmdb.original_language === 'ja' &&
-          tmdb.genres.find((genre) => genre.id === 16)
-            ? true
-            : false,
-        vote_average: tmdb?.vote_average,
-        vote_count: tmdb?.vote_count,
-        updated_at: new Date(),
-      });
+      await this.tvModel.updateOne(
+        { id: tmdb.id },
+        {
+          id: tmdb.id,
+          number_of_episodes: tmdb.number_of_episodes,
+          number_of_seasons: tmdb.number_of_seasons,
+          name: tmdb.name,
+          is_anime:
+            tmdb.original_language === 'ja' &&
+            tmdb.genres.find((genre) => genre.id === 16)
+              ? true
+              : false,
+          vote_average: tmdb?.vote_average,
+          vote_count: tmdb?.vote_count,
+          updated_at: new Date(),
+        },
+      );
     }
     return k.length;
   }

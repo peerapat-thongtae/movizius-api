@@ -97,4 +97,9 @@ export class CronController {
     }
     return todayShows.results.map((val) => val.title);
   }
+
+  @Get('/movie/update-info')
+  async updateMovieInfo() {
+    return this.movieService.updateMovieInfo();
+  }
 }

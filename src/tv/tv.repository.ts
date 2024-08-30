@@ -103,7 +103,7 @@ export class TVRepository {
       const splitSort = _.split(payload.sort_by, '.');
       const sortField = splitSort?.[0];
       const sortType = splitSort?.[1];
-
+      console.log(payload.sort_by);
       pipeline.push({
         $sort: {
           [sortField]: sortType === 'desc' ? -1 : 1,

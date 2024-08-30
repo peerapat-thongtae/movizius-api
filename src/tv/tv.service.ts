@@ -248,29 +248,31 @@ export class TvService {
     user_id,
     page,
     status,
-    sort_by,
+    sort,
   }: {
     user_id: string;
     page: number;
     status: TodoStatusEnum;
-    sort_by?: SortType;
+    sort?: SortType;
     is_anime?: boolean;
   }) {
     const limit = 20;
     const skip = limit * (page - 1);
 
-    let sort: SortType = '';
-    if (!sort_by) {
+    let sorts: SortType = '';
+    if (!sort) {
       if (status === 'watchlist') {
-        sort = 'watchlisted_at.desc';
+        sorts = 'watchlisted_at.desc';
       } else {
-        sort = 'latest_watched.desc';
+        sorts = 'latest_watched.desc';
       }
+    } else {
+      sorts = sort;
     }
     const query = this.tvRepository.query({
       user_id,
       status,
-      sort_by: sort,
+      sort_by: sorts,
     });
     const paginatationQuery: PipelineStage[] = [
       {

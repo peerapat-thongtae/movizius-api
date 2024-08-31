@@ -53,6 +53,17 @@ export class TVRepository {
       },
     },
     {
+      $addFields: {
+        latest_state: {
+          $cond: {
+            if: { $eq: ['$account_status', 'watched'] },
+            then: '$latest_watched',
+            else: '$watchlisted_at',
+          },
+        },
+      },
+    },
+    {
       $project: {
         _id: 0,
         id: 1,
@@ -60,6 +71,8 @@ export class TVRepository {
         name: '$tv.name',
         media_type: 'tv',
         is_anime: 1,
+        vote_average: '$tv.vote_average',
+        vote_count: '$tv.vote_count',
         number_of_episodes: '$tv.number_of_episodes',
         number_of_seasons: '$tv.number_of_seasons',
         episode_watched: 1,
@@ -67,6 +80,7 @@ export class TVRepository {
         watchlisted_at: 1,
         count_watched: 1,
         account_status: 1,
+        latest_state: 1,
       },
     },
   ];
@@ -103,7 +117,6 @@ export class TVRepository {
       const splitSort = _.split(payload.sort_by, '.');
       const sortField = splitSort?.[0];
       const sortType = splitSort?.[1];
-      console.log(payload.sort_by);
       pipeline.push({
         $sort: {
           [sortField]: sortType === 'desc' ? -1 : 1,

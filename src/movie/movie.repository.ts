@@ -100,6 +100,7 @@ export class MovieRepository {
       pipeline.push({
         $sort: {
           [sortField]: sortType === 'desc' ? -1 : 1,
+          id: 1,
         },
       });
     }

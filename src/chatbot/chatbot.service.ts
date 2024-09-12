@@ -21,6 +21,7 @@ export class ChatbotService {
   }
 
   async getMediaAccountState({ media_type, total, userId }) {
+    return 'adsdada';
     if (media_type === 'movie') {
       const movies = await this.movieService.getAllMovieStateByUser({
         user_id: userId,

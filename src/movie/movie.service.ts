@@ -236,6 +236,7 @@ export class MovieService {
     user_id: string;
     status: TodoStatusEnum;
   }): Promise<MovieUser> {
+    await this.createOrGet(payload.id);
     const found = await this.movieUserModel.findOne({
       id: payload.id,
       user_id: payload.user_id,

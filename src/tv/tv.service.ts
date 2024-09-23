@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { TMDBService } from '../medias/tmdb.service';
 import { RatingService } from '../rating/rating.service';
-import { ceil, first, uniq } from 'lodash';
+import { ceil, difference, first, uniq } from 'lodash';
 import { lastValueFrom, map, from } from 'rxjs';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { CreateTvDto } from '../tv/dto/create-tv.dto';
@@ -20,18 +20,6 @@ import { TVRepository } from '../tv/tv.repository';
 export class TvService {
   private media_type = 'tv';
   constructor(
-    // @InjectRepository(TV)
-    // private tvRepository: Repository<TV>,
-
-    // @InjectRepository(TVUser)
-    // private tvUserRepository: Repository<TVUser>,
-
-    // @InjectModel(Media.name)
-    // private tvModel: Model<Media>,
-
-    // @InjectModel(MediaUser.name)
-    // private tvUserModel: Model<MediaUser>,
-
     @InjectModel(TV.name)
     private tvModel: Model<TV>,
 

@@ -9,26 +9,10 @@ import { RatingModule } from '../rating/rating.module';
 import { MovieModule } from '../movie/movie.module';
 import { TvModule } from '../tv/tv.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Media, MediaSchema } from '../medias/schema/medias.schema';
-import { MediaUser, MediaUserSchema } from '../medias/schema/media_user.schema';
 
 @Module({
   controllers: [],
   imports: [
-    MongooseModule.forFeature([
-      {
-        name: Media.name,
-        schema: MediaSchema,
-        collection: 'media',
-      },
-    ]),
-    MongooseModule.forFeature([
-      {
-        name: MediaUser.name,
-        schema: MediaUserSchema,
-        collection: 'media_user',
-      },
-    ]),
     forwardRef(() => LineModule),
     HttpModule,
     forwardRef(() => AuthModule),

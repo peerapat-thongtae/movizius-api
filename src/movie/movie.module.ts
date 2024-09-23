@@ -8,8 +8,6 @@ import { MediasModule } from '../medias/medias.module';
 import { RatingModule } from '../rating/rating.module';
 // import { MovieQueryBuilder } from '../movie/movie.query';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Media, MediaSchema } from '../medias/schema/medias.schema';
-import { MediaUser, MediaUserSchema } from '../medias/schema/media_user.schema';
 import { Movie, MovieSchema } from '../movie/schema/movie.schema';
 import { MovieUserSchema } from '../movie/schema/movie_user.schema';
 import { MovieRepository } from '../movie/movie.repository';
@@ -28,18 +26,6 @@ import { MovieRepository } from '../movie/movie.repository';
         name: MovieUser.name,
         schema: MovieUserSchema,
         collection: 'movie_user',
-      },
-    ]),
-    MongooseModule.forFeature([
-      {
-        name: Media.name,
-        schema: MediaSchema,
-      },
-    ]),
-    MongooseModule.forFeature([
-      {
-        name: MediaUser.name,
-        schema: MediaUserSchema,
       },
     ]),
     RatingModule,

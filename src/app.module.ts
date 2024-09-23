@@ -14,6 +14,7 @@ import { RatingModule } from './rating/rating.module';
 import { TvModule } from './tv/tv.module';
 import { CronModule } from './cron/cron.module';
 import { MongoModule } from './databases/mongo.module';
+import { ScheduleCalendarModule } from './schedule-calendar/schedule-calendar.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { MongoModule } from './databases/mongo.module';
     MovieModule,
     RatingModule,
     TvModule,
+    ScheduleCalendarModule,
     // CronModule,
   ],
   controllers: [AppController],

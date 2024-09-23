@@ -147,4 +147,46 @@ export class ScheduleCalendarService {
       });
     }
   }
+
+  async updateMovieCalendar() {
+    const currentDate = dayjs().format('YYYY-MM-DD');
+    const getFunc = (page: number) => {
+      return this.tmdbService.discoverMovie({
+        page: page,
+        'release_date.gte': currentDate,
+        'release_date.lte': currentDate,
+        region: 'TH',
+      });
+    };
+    const resp = await getFunc(1);
+
+    const movies = [...resp.results];
+
+    if (resp.total_pages > 1) {
+      for (let page = 2; page <= resp.total_pages; page++) {
+        const pageResp = await getFunc(page);
+        movies.push(...pageResp.results);
+      }
+    }
+    let movieDescription = '';
+    if (movies.length > 0) {
+      for (const [index, movie] of movies.entries()) {
+        movieDescription += `${index + 1}. [${movie.title}](${process.env.WEB_MEDIA_URL}/tv/${movie.id})\n`;
+      }
+    } else {
+      movieDescription = 'No movies release today';
+    }
+
+    await lastValueFrom(
+      this.httpService.post(process.env.DISCORD_WEBHOOK_MOVIES_ROOM, {
+        embeds: [
+          {
+            title: `Movie Release Today : ${dayjs(currentDate).format('DD/MM/YYYY')}`,
+            description: movieDescription,
+          },
+        ],
+      }),
+    );
+    return movies;
+  }
 }

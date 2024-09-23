@@ -11,4 +11,9 @@ export class ScheduleCalendarController {
   updateTVAiring() {
     return this.scheduleCalendarService.updateTVCalendar();
   }
+
+  @Get('update-movie-airing')
+  updateMovieAiring() {
+    return this.scheduleCalendarService.updateMovieCalendar();
+  }
 }

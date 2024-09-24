@@ -156,10 +156,10 @@ export class ScheduleCalendarService {
         'release_date.gte': currentDate,
         'release_date.lte': currentDate,
         region: 'TH',
+        with_release_type: '3|4|6' as any,
       });
     };
     const resp = await getFunc(1);
-
     const movies = [...resp.results];
 
     if (resp.total_pages > 1) {

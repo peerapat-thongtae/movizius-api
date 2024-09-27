@@ -5,7 +5,7 @@ import { Schedule } from 'src/schedule-calendar/schema/schedule.schema';
 import { Model } from 'mongoose';
 import dayjs from 'dayjs';
 import { MediasService } from '../medias/medias.service';
-import { omit, omitBy, orderBy, sortBy } from 'lodash';
+import { chunk, omit, omitBy, orderBy, sortBy } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 
@@ -31,7 +31,7 @@ export class ScheduleCalendarService {
         without_genres: `${['10763', '10764', '10766', '10767'].join(',')}`,
         'air_date.gte': date,
         'air_date.lte': date,
-        timezone: 'Asia/Bangkok',
+        // timezone: 'Asia/Bangkok',
       } as any);
 
       tvs.results = tvs.results.filter((val) => {
@@ -103,30 +103,39 @@ export class ScheduleCalendarService {
             .sort(
               (a, b) => parseFloat(b.popularity) - parseFloat(a.popularity),
             );
-          let tvDescription = '';
-          if (tvs.length > 0) {
-            for (const [index, tv] of tvs.entries()) {
+          const chunkTvs: any[] = chunk(tvs, 35);
+          const tvDescriptions = [];
+          if (tvs.length === 0) {
+            tvDescriptions.push('No TV Series release today');
+          }
+
+          let index = 1;
+          for (const tvFromChunks of chunkTvs) {
+            let desc = '';
+            for (const tv of tvFromChunks) {
               const streaming =
                 tv?.watch_th?.flatrate?.[0]?.provider_name || '';
-
               const EPText = tv.last_episode_to_air
                 ? `Season ${tv.last_episode_to_air.season_number} EP. ${tv.last_episode_to_air.episode_number}`
                 : '';
-              tvDescription += `${index + 1}. [${tv.name}](${process.env.WEB_MEDIA_URL}/tv/${tv.id}) ${EPText && `: **${EPText}**`} ${streaming && `| **${streaming}**`} \n`;
+              desc += `${index}. [${tv.name}](${process.env.WEB_MEDIA_URL}/tv/${tv.id}) ${EPText && `: **${EPText}**`} ${streaming && `| **${streaming}**`} \n`;
+              index++;
             }
-          } else {
-            tvDescription = 'No tv series release today';
+            tvDescriptions.push(desc);
           }
-          await lastValueFrom(
-            this.httpService.post(process.env.DISCORD_WEBHOOK_TV_ROOM, {
-              embeds: [
-                {
-                  title: `TV Release Today : ${dayjs(date).format('DD MMMM YYYY')}`,
-                  description: tvDescription,
-                },
-              ],
-            }),
-          );
+
+          for (const [index, desc] of tvDescriptions.entries()) {
+            await lastValueFrom(
+              this.httpService.post(process.env.DISCORD_WEBHOOK_TV_ROOM, {
+                embeds: [
+                  {
+                    title: `TV Release Today : ${dayjs(date).format('DD MMMM YYYY')} ${tvDescriptions.length > 1 && `(${index + 1})`}`,
+                    description: desc,
+                  },
+                ],
+              }),
+            );
+          }
 
           await this.scheduleModel.updateOne(
             { _id: tvAiringObj._id },
@@ -171,7 +180,7 @@ export class ScheduleCalendarService {
     let movieDescription = '';
     if (movies.length > 0) {
       for (const [index, movie] of movies.entries()) {
-        movieDescription += `${index + 1}. [${movie.title}](${process.env.WEB_MEDIA_URL}/tv/${movie.id})\n`;
+        movieDescription += `${index + 1}. [${movie.title}](${process.env.WEB_MEDIA_URL}/movie/${movie.id})\n`;
       }
     } else {
       movieDescription = 'No movies release today';

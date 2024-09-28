@@ -129,7 +129,7 @@ export class ScheduleCalendarService {
               this.httpService.post(process.env.DISCORD_WEBHOOK_TV_ROOM, {
                 embeds: [
                   {
-                    title: `TV Release Today : ${dayjs(date).format('DD MMMM YYYY')} ${tvDescriptions.length > 1 && `(${index + 1})`}`,
+                    title: `TV Release Today : ${dayjs(date).format('DD MMMM YYYY')} ${tvDescriptions.length > 1 ? `(${index + 1})` : ''}`,
                     description: desc,
                   },
                 ],

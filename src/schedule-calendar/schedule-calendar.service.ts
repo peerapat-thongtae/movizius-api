@@ -31,7 +31,7 @@ export class ScheduleCalendarService {
         without_genres: `${['10763', '10764', '10766', '10767'].join(',')}`,
         'air_date.gte': date,
         'air_date.lte': date,
-        // timezone: 'Asia/Bangkok',
+        timezone: 'Asia/Bangkok',
       } as any);
 
       tvs.results = tvs.results.filter((val) => {

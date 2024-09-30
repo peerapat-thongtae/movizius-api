@@ -5,7 +5,7 @@ import { Schedule } from 'src/schedule-calendar/schema/schedule.schema';
 import { Model } from 'mongoose';
 import dayjs from 'dayjs';
 import { MediasService } from '../medias/medias.service';
-import { chunk, omit, omitBy, orderBy, sortBy } from 'lodash';
+import { chunk, last, omit, omitBy, orderBy, sortBy } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 
@@ -159,14 +159,24 @@ export class ScheduleCalendarService {
 
   async updateMovieCalendar() {
     const currentDate = dayjs().format('YYYY-MM-DD');
-    const getFunc = (page: number) => {
-      return this.tmdbService.discoverMovie({
+    const getFunc = async (page: number) => {
+      const resp = await this.tmdbService.discoverMovie({
         page: page,
         'release_date.gte': currentDate,
         'release_date.lte': currentDate,
         region: 'TH',
         with_release_type: '3|4|6' as any,
       });
+
+      const results = [];
+      for (const detail of resp.results) {
+        const tmdb = await this.mediaService.getMovieInfo(detail.id);
+        results.push(tmdb);
+      }
+      return {
+        ...resp,
+        results,
+      };
     };
     const resp = await getFunc(1);
     const movies = [...resp.results];
@@ -180,7 +190,14 @@ export class ScheduleCalendarService {
     let movieDescription = '';
     if (movies.length > 0) {
       for (const [index, movie] of movies.entries()) {
-        movieDescription += `${index + 1}. [${movie.title}](${process.env.WEB_MEDIA_URL}/movie/${movie.id})\n`;
+        const releaseProvider: any = last(
+          movie.release_dates?.results?.find((val) => val.iso_3166_1 === 'TH')
+            ?.release_dates,
+        );
+
+        const releaseProviderText =
+          releaseProvider?.type === 4 ? ` | **${releaseProvider.note}**` : '';
+        movieDescription += `${index + 1}. [${movie.title}](${process.env.WEB_MEDIA_URL}/movie/${movie.id}) ${releaseProviderText}\n`;
       }
     } else {
       movieDescription = 'No movies release today';

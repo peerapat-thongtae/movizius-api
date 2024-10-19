@@ -227,8 +227,8 @@ export class TvService {
     return first(resp) || null;
   }
 
-  async getAllStates(payload: { user_id?: string }) {
-    const query = this.tvRepository.query({ user_id: payload.user_id });
+  async getAllStates(payload?: { user_id?: string }) {
+    const query = this.tvRepository.query({ user_id: payload?.user_id || '' });
     return this.tvUserModel.aggregate(query);
   }
 

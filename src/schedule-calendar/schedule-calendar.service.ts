@@ -5,9 +5,10 @@ import { Schedule } from 'src/schedule-calendar/schema/schedule.schema';
 import { Model } from 'mongoose';
 import dayjs from 'dayjs';
 import { MediasService } from '../medias/medias.service';
-import { chunk, last, omit, omitBy, orderBy, sortBy } from 'lodash';
+import { chain, chunk, last, omit, omitBy, orderBy, sortBy } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { TvService } from '../tv/tv.service';
 
 @Injectable()
 export class ScheduleCalendarService {
@@ -16,6 +17,7 @@ export class ScheduleCalendarService {
     private scheduleModel: Model<Schedule>,
     private tmdbService: TMDBService,
     private mediaService: MediasService,
+    private tvService: TvService,
     private httpService: HttpService,
   ) {}
 
@@ -23,7 +25,6 @@ export class ScheduleCalendarService {
     const key = 'TV_AIRING_CALENDAR';
     const date = dayjs().format('YYYY-MM-DD');
     const tvAiringObj = await this.scheduleModel.findOne({ key, date });
-    // 0-5 12 * * *
     const getFunc = async (page: number) => {
       const tvs = await this.tmdbService.discoverTv({
         page: page,
@@ -35,24 +36,21 @@ export class ScheduleCalendarService {
       } as any);
 
       tvs.results = tvs.results.filter((val) => {
-        return (
-          val.genre_ids.length > 0 &&
-          [
-            'th',
-            'en',
-            'us',
-            'da',
-            'kr',
-            'jp',
-            'no',
-            'de',
-            'pl',
-            'nl',
-            'ga',
-            'la',
-            'ru',
-          ].includes(val.original_language)
-        );
+        return [
+          'th',
+          'en',
+          'us',
+          'da',
+          'kr',
+          'jp',
+          'no',
+          'de',
+          'pl',
+          'nl',
+          'ga',
+          'la',
+          'ru',
+        ].includes(val.original_language);
       });
       const results = await Promise.all(
         tvs.results.map((val) =>
@@ -94,15 +92,26 @@ export class ScheduleCalendarService {
         );
       } else {
         if (!tvAiringObj.sended) {
-          const tvs = tvAiringObj.medias
-            .map((val) => {
+          const allTVS = await this.tvService.getAllStates();
+          const tvs = chain(tvAiringObj.medias)
+            .map((item) => {
+              const has_state = allTVS.map((val) => val.id).includes(item.id);
               return {
-                ...val,
+                ...item,
+                has_state: has_state ? true : false,
               };
             })
-            .sort(
-              (a, b) => parseFloat(b.popularity) - parseFloat(a.popularity),
-            );
+            .orderBy(
+              [
+                (item) =>
+                  allTVS.map((val) => val.id).includes(item.id) ? 0 : 1, // Check if the value is in the prioritized array
+                'popularity',
+              ],
+              ['asc', 'desc'],
+            )
+            .value();
+
+          // return tvs;
           const chunkTvs: any[] = chunk(tvs, 35);
           const tvDescriptions = [];
           if (tvs.length === 0) {
@@ -115,10 +124,29 @@ export class ScheduleCalendarService {
             for (const tv of tvFromChunks) {
               const streaming =
                 tv?.watch_th?.flatrate?.[0]?.provider_name || '';
-              const EPText = tv.last_episode_to_air
-                ? `Season ${tv.last_episode_to_air.season_number} EP. ${tv.last_episode_to_air.episode_number}`
+
+              let ep = null;
+              if (
+                [
+                  date,
+                  dayjs(date).subtract(1, 'd').format('YYYY-MM-DD'),
+                ].includes(tv?.last_episode_to_air?.air_date)
+              ) {
+                ep = tv?.last_episode_to_air;
+              }
+
+              if (
+                [
+                  date,
+                  dayjs(date).subtract(1, 'd').format('YYYY-MM-DD'),
+                ].includes(tv?.next_episode_to_air?.air_date)
+              ) {
+                ep = tv?.next_episode_to_air;
+              }
+              const EPText = ep
+                ? `Season ${ep.season_number} EP. ${ep.episode_number} ${ep.episode_type === 'finale' ? '__Finale__' : ''}`
                 : '';
-              desc += `${index}. [${tv.name}](${process.env.WEB_MEDIA_URL}/tv/${tv.id}) ${EPText && `: **${EPText}**`} ${streaming && `| **${streaming}**`} \n`;
+              desc += `${index}. ${tv.has_state ? '**' : ''}[${tv.name}](${process.env.WEB_MEDIA_URL}/tv/${tv.id})${tv.has_state ? '**' : ''}  ${EPText ? `: **${EPText}**` : ''} ${streaming && `| **${streaming}**`} \n`;
               index++;
             }
             tvDescriptions.push(desc);
@@ -141,6 +169,8 @@ export class ScheduleCalendarService {
             { _id: tvAiringObj._id },
             { sended: true },
           );
+
+          await this.scheduleModel.deleteMany();
         }
       }
     } else {

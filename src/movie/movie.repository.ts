@@ -112,15 +112,12 @@ export class MovieRepository {
       }
     }
 
-    if (payload?.page && payload?.limit) {
+    if (payload?.page) {
       const page = payload.page;
       const limit = payload?.limit || 20;
       const skip = limit * (page - 1);
 
       pipeline.push({ $skip: skip });
-      pipeline.push({ $limit: limit });
-    } else if (payload.limit) {
-      const limit = payload?.limit || 20;
       pipeline.push({ $limit: limit });
     }
 

@@ -14,6 +14,7 @@ interface MovieQueryPayload {
   limit?: number;
   sort_by?: SortType;
   is_anime?: boolean;
+  except_ids?: number[];
 }
 @Injectable()
 export class MovieRepository {
@@ -93,24 +94,33 @@ export class MovieRepository {
     }
 
     if (payload?.sort_by) {
-      const splitSort = _.split(payload.sort_by, '.');
-      const sortField = splitSort?.[0];
-      const sortType = splitSort?.[1];
+      if (payload.sort_by !== 'random') {
+        const splitSort = _.split(payload.sort_by, '.');
+        const sortField = splitSort?.[0];
+        const sortType = splitSort?.[1];
 
-      pipeline.push({
-        $sort: {
-          [sortField]: sortType === 'desc' ? -1 : 1,
-          id: 1,
-        },
-      });
+        pipeline.push({
+          $sort: {
+            [sortField]: sortType === 'desc' ? -1 : 1,
+            id: 1,
+          },
+        });
+      } else {
+        pipeline.push({
+          $sample: { size: payload?.limit || 10 },
+        });
+      }
     }
 
-    if (payload?.page) {
+    if (payload?.page && payload?.limit) {
       const page = payload.page;
       const limit = payload?.limit || 20;
       const skip = limit * (page - 1);
 
       pipeline.push({ $skip: skip });
+      pipeline.push({ $limit: limit });
+    } else if (payload.limit) {
+      const limit = payload?.limit || 20;
       pipeline.push({ $limit: limit });
     }
 

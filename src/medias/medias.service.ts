@@ -71,6 +71,11 @@ export class MediasService {
     return movieInfo;
   }
 
+  async getMovieInfos(ids: number[]) {
+    const promises = await Promise.all(ids.map((id) => this.getMovieInfo(id)));
+    return promises;
+  }
+
   async getRecommendationMovies(id: number) {
     const resp = await this.tmdbService.movieRecommendations({ id });
 

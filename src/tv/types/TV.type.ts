@@ -40,4 +40,5 @@ export type SortType =
   | 'number_of_episodes.asc'
   | 'latest_watched.desc'
   | 'latest_watched.asc'
+  | 'random'
   | '';

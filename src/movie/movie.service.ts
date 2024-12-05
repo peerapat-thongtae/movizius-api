@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
-import { ceil, omit, split } from 'lodash';
+import { ceil, omit, pick, pickBy, split } from 'lodash';
 import { FilterMovieRequest } from './dto/filter-movie.dto';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { TMDBService } from '../medias/tmdb.service';
@@ -227,8 +227,34 @@ export class MovieService {
     return `This action removes a #${id} movie`;
   }
 
-  async randomMovie(payload: { total: number; status?: TodoStatusEnum }) {
-    return {};
+  async randomMovie(payload: {
+    page?: number;
+    total: number;
+    status?: TodoStatusEnum;
+    user_id: string;
+  }) {
+    const query = this.movieRepository.query({
+      page: payload?.page,
+      user_id: payload.user_id,
+      limit: payload.total,
+      status: payload.status,
+      except_ids: [],
+      sort_by: 'random',
+    });
+
+    const resp = await this.movieUserModel.aggregate(query);
+    const results = await this.mediaService.getMovieInfos(
+      resp.map((val) => val.id),
+    );
+
+    return {
+      page: 1,
+      total_pages: 1,
+      total_results: results.length,
+      results: results.map((val) =>
+        pick(val, ['id', 'title', 'vote_average', 'release_date']),
+      ),
+    };
   }
 
   async createOrUpdate(payload: {

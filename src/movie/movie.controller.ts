@@ -48,10 +48,12 @@ export class MovieController {
   }
 
   @Get('random')
-  randomMovie() {
+  @UseGuards(AuthGuard('jwt'))
+  randomMovie(@Req() req: any) {
     return this.movieService.randomMovie({
       total: 5,
       status: TodoStatusEnum.WATCHLIST,
+      user_id: req?.user?.sub,
     });
   }
 

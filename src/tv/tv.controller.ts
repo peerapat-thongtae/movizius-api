@@ -42,7 +42,6 @@ export class TvController {
   @Get('paginate/:status')
   @UseGuards(AuthGuard('jwt'))
   paginate(@Param('status') status: TodoStatusEnum, @Req() req: any) {
-    console.log('yyyy');
     return this.tvService.paginateTVByStatus({
       ...req.query,
       user_id: req?.user?.sub,

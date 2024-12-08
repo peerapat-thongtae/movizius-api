@@ -241,8 +241,9 @@ export class TvService {
     is_anime?: boolean;
   }) {
     const { user_id, status, sort } = payload;
-    const page = payload.page || 1;
-    const limit = payload?.limit || 20;
+    const page: number = payload.page ? Number(payload.page) : 1;
+    const limit: number = payload.limit ? Number(payload.limit) : 20;
+
     const skip = limit * (page - 1);
 
     let sorts: SortType = '';

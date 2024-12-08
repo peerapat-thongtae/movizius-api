@@ -9,6 +9,7 @@ export class AppController {
   @Get()
   getHello(): string {
     this.logger.warn('hello');
+    console.log('hello');
     return this.appService.getHello();
   }
 }

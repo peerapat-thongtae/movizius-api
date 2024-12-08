@@ -232,19 +232,17 @@ export class TvService {
     return this.tvUserModel.aggregate(query);
   }
 
-  async paginateTVByStatus({
-    user_id,
-    page,
-    status,
-    sort,
-  }: {
+  async paginateTVByStatus(payload: {
     user_id: string;
     page: number;
+    limit?: number;
     status: TodoStatusEnum;
     sort?: SortType;
     is_anime?: boolean;
   }) {
-    const limit = 20;
+    const { user_id, status, sort } = payload;
+    const page = payload.page || 1;
+    const limit = payload?.limit || 20;
     const skip = limit * (page - 1);
 
     let sorts: SortType = '';

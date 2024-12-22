@@ -67,6 +67,16 @@ export class TvController {
     });
   }
 
+  @Get('random')
+  @UseGuards(AuthGuard('jwt'))
+  randomMovie(@Req() req: any) {
+    return this.tvService.random({
+      total: 5,
+      status: TodoStatusEnum.WATCHLIST,
+      user_id: req?.user?.sub,
+    });
+  }
+
   @Get('/discover')
   discoverTV(@Query() query: DiscoverTvRequest) {
     return this.tvService.discoverTV(query);

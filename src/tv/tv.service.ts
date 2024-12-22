@@ -232,6 +232,33 @@ export class TvService {
     return this.tvUserModel.aggregate(query);
   }
 
+  async random(payload: {
+    page?: number;
+    total: number;
+    status?: TodoStatusEnum;
+    user_id: string;
+  }) {
+    const query = this.tvRepository.query({
+      page: payload?.page,
+      user_id: payload.user_id,
+      limit: payload.total,
+      status: payload.status,
+      sort_by: 'random',
+    });
+
+    const resp = await this.tvUserModel.aggregate(query);
+    const results = await this.mediaService.getTVInfos(
+      resp.map((val) => val.id),
+    );
+
+    return {
+      page: 1,
+      total_pages: 1,
+      total_results: results.length,
+      results: results,
+    };
+  }
+
   async paginateTVByStatus(payload: {
     user_id: string;
     page: number;
@@ -281,7 +308,6 @@ export class TvService {
           from(this.mediaService.getTVInfo(val.id)).pipe(
             map((tmdb) => {
               return {
-                ...val,
                 ...tmdb,
               };
             }),

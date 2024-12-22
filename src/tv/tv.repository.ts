@@ -114,15 +114,22 @@ export class TVRepository {
     }
 
     if (payload?.sort_by) {
-      const splitSort = _.split(payload.sort_by, '.');
-      const sortField = splitSort?.[0];
-      const sortType = splitSort?.[1];
-      pipeline.push({
-        $sort: {
-          [sortField]: sortType === 'desc' ? -1 : 1,
-          id: 1,
-        },
-      });
+      if (payload.sort_by !== 'random') {
+        const splitSort = _.split(payload.sort_by, '.');
+        const sortField = splitSort?.[0];
+        const sortType = splitSort?.[1];
+
+        pipeline.push({
+          $sort: {
+            [sortField]: sortType === 'desc' ? -1 : 1,
+            id: 1,
+          },
+        });
+      } else {
+        pipeline.push({
+          $sample: { size: payload?.limit || 10 },
+        });
+      }
     }
 
     if (payload?.page) {

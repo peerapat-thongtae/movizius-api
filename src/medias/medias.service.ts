@@ -32,10 +32,10 @@ export class MediasService {
           const findRating = await this.ratingService.findByImdbId(
             externalIds?.imdb_id,
           );
-
           return _.omit(
             {
               ...val,
+              media_type: 'tv',
               imdb_id: externalIds?.imdb_id || '',
               watch_providers: val?.['watch/providers'],
               vote_average: findRating?.vote_average || val.vote_average,
@@ -60,11 +60,18 @@ export class MediasService {
       ).pipe(
         map(async (val) => {
           const findRating = await this.ratingService.findByImdbId(val.imdb_id);
-          return {
-            ...val,
-            vote_average: findRating?.vote_average || val.vote_average,
-            vote_count: findRating?.vote_count || val.vote_count,
-          };
+          const externalIds: any = (val as any).external_ids;
+          return _.omit(
+            {
+              ...val,
+              media_type: 'movie',
+              imdb_id: externalIds?.imdb_id || '',
+              watch_providers: val?.['watch/providers'],
+              vote_average: findRating?.vote_average || val.vote_average,
+              vote_count: findRating?.vote_count || val.vote_count,
+            },
+            ['watch/providers'],
+          );
         }),
       ),
     );
@@ -73,6 +80,11 @@ export class MediasService {
 
   async getMovieInfos(ids: number[]) {
     const promises = await Promise.all(ids.map((id) => this.getMovieInfo(id)));
+    return promises;
+  }
+
+  async getTVInfos(ids: number[]) {
+    const promises = await Promise.all(ids.map((id) => this.getTVInfo(id)));
     return promises;
   }
 

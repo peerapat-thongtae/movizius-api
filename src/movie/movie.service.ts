@@ -251,9 +251,7 @@ export class MovieService {
       page: 1,
       total_pages: 1,
       total_results: results.length,
-      results: results.map((val) =>
-        pick(val, ['id', 'title', 'vote_average', 'release_date']),
-      ),
+      results: results,
     };
   }
 

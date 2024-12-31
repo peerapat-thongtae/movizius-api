@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { TMDBService } from '../medias/tmdb.service';
 import { RatingService } from '../rating/rating.service';
-import { ceil, difference, first, uniq } from 'lodash';
+import { ceil, difference, first, pick, uniq } from 'lodash';
 import { lastValueFrom, map, from } from 'rxjs';
 import { TodoStatusEnum } from '../medias/enum/todo-status.enum';
 import { CreateTvDto } from '../tv/dto/create-tv.dto';
@@ -67,6 +67,34 @@ export class TvService {
               : false,
           vote_average: tmdb?.vote_average,
           vote_count: tmdb?.vote_count,
+          seasons: tmdb.seasons
+            .filter((val) => val.season_number !== 0)
+            .map((val) => ({
+              air_date: val.air_date,
+              name: val.name,
+              episode_count: val.episode_count,
+              season_number: val.season_number,
+              id: val.id,
+            })),
+          last_episode_to_air: tmdb.last_episode_to_air
+            ? pick(tmdb.last_episode_to_air, [
+                'id',
+                'episode_number',
+                'season_number',
+                'air_date',
+                'episode_type',
+              ])
+            : null,
+          next_episode_to_air: tmdb.next_episode_to_air
+            ? pick(tmdb.next_episode_to_air, [
+                'id',
+                'episode_number',
+                'season_number',
+                'air_date',
+                'episode_type',
+              ])
+            : null,
+          // metadata: tmdb,
           updated_at: new Date(),
         },
       );
@@ -229,7 +257,25 @@ export class TvService {
 
   async getAllStates(payload?: { user_id?: string }) {
     const query = this.tvRepository.query({ user_id: payload?.user_id || '' });
-    return this.tvUserModel.aggregate(query);
+    const tvs = await this.tvUserModel.aggregate(query);
+    return tvs.map((val) => {
+      const watched_seasons = [];
+      const seasons = val?.seasons || [];
+      for (const season of seasons) {
+        if (
+          season.episode_count ===
+          val.episode_watched.filter(
+            (ep) => ep.season_number === season.season_number,
+          ).length
+        ) {
+          watched_seasons.push(season.season_number);
+        }
+      }
+      return {
+        ...val,
+        watched_seasons: watched_seasons,
+      };
+    });
   }
 
   async random(payload: {
@@ -260,14 +306,15 @@ export class TvService {
   }
 
   async paginateTVByStatus(payload: {
+    is_anime?: boolean;
     user_id: string;
     page: number;
     limit?: number;
     status: TodoStatusEnum;
     sort?: SortType;
-    is_anime?: boolean;
   }) {
     const { user_id, status, sort } = payload;
+    const is_anime: string = String(payload.is_anime);
     const page: number = payload.page ? Number(payload.page) : 1;
     const limit: number = payload.limit ? Number(payload.limit) : 20;
 
@@ -286,6 +333,12 @@ export class TvService {
     const query = this.tvRepository.query({
       user_id,
       status,
+      is_anime:
+        is_anime !== 'undefined'
+          ? is_anime === 'true'
+            ? true
+            : false
+          : undefined,
       sort_by: sorts,
     });
     const paginatationQuery: PipelineStage[] = [

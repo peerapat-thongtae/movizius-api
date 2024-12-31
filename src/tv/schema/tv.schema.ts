@@ -31,6 +31,18 @@ export class TV {
   @Prop({ type: Number, default: null })
   vote_count: number | null;
 
+  @Prop({ type: Array, default: [] })
+  seasons: any[];
+
+  @Prop({ type: Object, default: null })
+  last_episode_to_air: any;
+
+  @Prop({ type: Object, default: null })
+  next_episode_to_air: any;
+
+  @Prop({ type: Object, default: null })
+  metadata?: any;
+
   @Prop({
     type: Date,
     default: new Date(),

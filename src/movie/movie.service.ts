@@ -71,6 +71,7 @@ export class MovieService {
               : false,
           vote_average: tmdb?.vote_average,
           vote_count: tmdb?.vote_count,
+          // metadata: tmdb,
           updated_at: new Date(),
         },
       );

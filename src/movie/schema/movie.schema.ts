@@ -31,6 +31,9 @@ export class Movie {
   @Prop({ type: Number, default: null })
   vote_count: number | null;
 
+  @Prop({ type: Object, default: null })
+  metadata?: any;
+
   @Prop({
     type: Date,
     default: new Date(),

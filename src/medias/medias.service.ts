@@ -23,7 +23,7 @@ export class MediasService {
         this.tmdbService.tvInfo({
           id: tvId,
           append_to_response:
-            'credits,account_states,external_ids,belongs_to_collection,watch_providers,watch-providers,videos,release_dates,watch/providers',
+            'credits,external_ids,belongs_to_collection,watch_providers,videos,release_dates,watch/providers',
         }),
       ).pipe(
         // Get Rating
@@ -61,7 +61,7 @@ export class MediasService {
         this.tmdbService.movieInfo({
           id: id,
           append_to_response:
-            'account_states,external_ids,casts,crew,belongs_to_collection,watch-providers,videos,release_dates,watch/providers',
+            'external_ids,casts,crew,belongs_to_collection,videos,release_dates,watch/providers',
         }),
       ).pipe(
         map(async (val) => {
@@ -76,7 +76,7 @@ export class MediasService {
             {
               ...val,
               media_type: 'movie',
-              imdb_id: externalIds?.imdb_id || '',
+              imdb_id: externalIds?.imdb_id || val.imdb_id || '',
               watch_providers: val?.['watch/providers'],
               vote_average: findRating?.vote_average || val.vote_average,
               vote_count: findRating?.vote_count || val.vote_count,

@@ -214,11 +214,6 @@ export class MovieService {
     }
 
     const movieFullDetails = (await Promise.all(promises)) || [];
-
-    movieFullDetails.forEach((val) => {
-      val.media_type = 'movie';
-    });
-
     movies.results = movieFullDetails;
     return movies;
   }

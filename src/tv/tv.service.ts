@@ -359,18 +359,8 @@ export class TvService {
       ...paginatationQuery,
     ]);
 
-    const results = await Promise.all(
-      filter.map((val) =>
-        lastValueFrom(
-          from(this.mediaService.getTVInfo(val.id)).pipe(
-            map((tmdb) => {
-              return {
-                ...tmdb,
-              };
-            }),
-          ),
-        ),
-      ),
+    const results = await this.mediaService.getTVInfos(
+      filter.map((val) => val.id),
     );
 
     return {

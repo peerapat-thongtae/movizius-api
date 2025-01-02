@@ -17,7 +17,7 @@ export class MediasService {
   ) {}
 
   async getTVInfo(tvId: number, options?: { rating?: boolean }) {
-    const { rating = true } = options;
+    const rating = !!options?.rating;
     const movieInfo = await lastValueFrom(
       from(
         this.tmdbService.tvInfo({
@@ -55,7 +55,7 @@ export class MediasService {
   }
   //
   async getMovieInfo(id: number, options?: { rating?: boolean }) {
-    const { rating } = options;
+    const rating = !!options?.rating;
     const movieInfo = await lastValueFrom(
       from(
         this.tmdbService.movieInfo({

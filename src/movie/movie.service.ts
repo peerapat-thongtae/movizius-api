@@ -71,7 +71,6 @@ export class MovieService {
               : false,
           vote_average: tmdb?.vote_average,
           vote_count: tmdb?.vote_count,
-          // metadata: tmdb,
           updated_at: new Date(),
         },
       );
@@ -86,6 +85,10 @@ export class MovieService {
         id: tmdb.id,
         media_type: 'movie',
         name: tmdb.title,
+        vote_average: tmdb.vote_average,
+        vote_count: tmdb.vote_count,
+        release_date: tmdb.release_date,
+        runtime: tmdb.runtime,
         is_anime:
           tmdb.original_language === 'ja' &&
           tmdb.genres.find((genre) => genre.id === 16)

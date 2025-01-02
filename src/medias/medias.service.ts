@@ -89,16 +89,18 @@ export class MediasService {
     return movieInfo;
   }
 
-  async getMovieInfos(ids: number[]) {
+  async getMovieInfos(ids: number[], options?: { rating?: boolean }) {
+    const isRating = options?.rating === undefined ? true : options?.rating;
     const promises = await Promise.all(
-      ids.map((id) => this.getMovieInfo(id, { rating: true })),
+      ids.map((id) => this.getMovieInfo(id, { rating: isRating })),
     );
     return promises;
   }
 
-  async getTVInfos(ids: number[]) {
+  async getTVInfos(ids: number[], options?: { rating?: boolean }) {
+    const isRating = options?.rating === undefined ? true : options?.rating;
     const promises = await Promise.all(
-      ids.map((id) => this.getTVInfo(id, { rating: true })),
+      ids.map((id) => this.getTVInfo(id, { rating: isRating })),
     );
     return promises;
   }

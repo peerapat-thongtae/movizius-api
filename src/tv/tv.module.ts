@@ -11,6 +11,7 @@ import { TVSchema } from '../tv/schema/tv.schema';
 
 import { TVUser, TVUserSchema } from '../tv/schema/tv_user.schema';
 import { TVRepository } from '../tv/tv.repository';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { TVRepository } from '../tv/tv.repository';
       },
     ]),
     RatingModule,
+    HttpModule,
     forwardRef(() => MediasModule),
   ],
   controllers: [TvController],

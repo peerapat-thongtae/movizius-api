@@ -16,7 +16,8 @@ export class MediasService {
     private ratingService: RatingService,
   ) {}
 
-  async getTVInfo(tvId: number) {
+  async getTVInfo(tvId: number, options?: { rating?: boolean }) {
+    const { rating = true } = options;
     const movieInfo = await lastValueFrom(
       from(
         this.tmdbService.tvInfo({
@@ -29,9 +30,13 @@ export class MediasService {
         map(async (val: any) => {
           // const imdbData: any = {};
           const externalIds: any = (val as any).external_ids;
-          const findRating = await this.ratingService.findByImdbId(
-            externalIds?.imdb_id,
-          );
+          let findRating = null;
+          if (rating) {
+            findRating = await this.ratingService.findByImdbId(
+              externalIds?.imdb_id,
+            );
+          }
+
           return _.omit(
             {
               ...val,
@@ -49,7 +54,8 @@ export class MediasService {
     return movieInfo;
   }
   //
-  async getMovieInfo(id: number) {
+  async getMovieInfo(id: number, options?: { rating?: boolean }) {
+    const { rating } = options;
     const movieInfo = await lastValueFrom(
       from(
         this.tmdbService.movieInfo({
@@ -59,7 +65,12 @@ export class MediasService {
         }),
       ).pipe(
         map(async (val) => {
-          const findRating = await this.ratingService.findByImdbId(val.imdb_id);
+          // const findRating = await this.ratingService.findByImdbId(val.imdb_id);
+          let findRating = null;
+          if (rating) {
+            findRating = await this.ratingService.findByImdbId(val?.imdb_id);
+          }
+
           const externalIds: any = (val as any).external_ids;
           return _.omit(
             {
@@ -79,12 +90,40 @@ export class MediasService {
   }
 
   async getMovieInfos(ids: number[]) {
-    const promises = await Promise.all(ids.map((id) => this.getMovieInfo(id)));
+    const promises = await Promise.all(
+      ids.map((id) => this.getMovieInfo(id, { rating: false })),
+    );
+    const ratings = await this.ratingService.findByImdbIds(
+      promises.map((val) => val.imdb_id),
+    );
+    promises.forEach((val) => {
+      const findRating = ratings.find(
+        (rating) => rating.imdb_id === val.imdb_id,
+      );
+      if (findRating) {
+        val.vote_average = findRating?.vote_average;
+        val.vote_count = findRating?.vote_count;
+      }
+    });
     return promises;
   }
 
   async getTVInfos(ids: number[]) {
-    const promises = await Promise.all(ids.map((id) => this.getTVInfo(id)));
+    const promises = await Promise.all(
+      ids.map((id) => this.getTVInfo(id, { rating: false })),
+    );
+    const ratings = await this.ratingService.findByImdbIds(
+      promises.map((val) => val.imdb_id),
+    );
+    promises.forEach((val) => {
+      const findRating = ratings.find(
+        (rating) => rating.imdb_id === val.imdb_id,
+      );
+      if (findRating) {
+        val.vote_average = findRating?.vote_average;
+        val.vote_count = findRating?.vote_count;
+      }
+    });
     return promises;
   }
 

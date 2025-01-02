@@ -15,6 +15,7 @@ import { Model, PipelineStage } from 'mongoose';
 import { TV } from '../tv/schema/tv.schema';
 import { TVUser } from '../tv/schema/tv_user.schema';
 import { TVRepository } from '../tv/tv.repository';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class TvService {
@@ -37,6 +38,9 @@ export class TvService {
 
     @Inject(forwardRef(() => RatingService))
     private ratingService: RatingService,
+
+    @Inject(HttpService)
+    private httpService: HttpService,
   ) {}
 
   async updateTVInfo() {
@@ -381,13 +385,7 @@ export class TvService {
     const params: any = {
       ...payload,
       without_genres: `${payload.without_genres},${['10763', '10764', '10766', '10767'].join(',')}`,
-      // with_type: uniq([...payload?.with_type?.split('|'), '2', '4']).join('|'),
       with_type: '2|4',
-      // with_original_language: languages
-      //   .filter((val) => val.iso_639_1 !== 'jp')
-      //   .map((val) => val.iso_639_1)
-      //   .join('|'),
-      // without_genres: '16',
     };
     const tvs = await this.tmdbService.discoverTv(params);
 
@@ -408,11 +406,5 @@ export class TvService {
 
     tvs.results = tvFullDetails;
     return tvs;
-  }
-
-  async test() {
-    return this.tvRepository.findMany({
-      status: 'watching',
-    });
   }
 }
